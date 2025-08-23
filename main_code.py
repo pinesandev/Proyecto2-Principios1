@@ -4,7 +4,7 @@ from tkinter import ttk
 
 # FUNCIONES
 
-# MAIN WINDOW CONFIG
+# MAIN WINDOW CONFIG ________________________________________________________________________________________
 ventana = Tk() # crear una instancia de una ventanta
 ventana.title("LABERINTOS") # nombre de la ventana
 ventana.geometry("600x400") # tamanho de la ventada
@@ -13,7 +13,7 @@ ventana.geometry("600x400") # tamanho de la ventada
 # ventana.columnconfigure(0, weight=1)
 # ventana.rowconfigure(0, weight=1)
  
-# FRAMES
+# FRAMES ____________________________________________________________________________________________________
 # Menu
 menu = ttk.Frame(ventana, padding=10)
 menu.grid(column=0, row=0)
@@ -26,7 +26,7 @@ area_juego.grid(column=1, row=0)
 area_juego2 = ttk.Frame(ventana, padding=10)
 area_juego2.grid(column=2, row=0)
 
-# OBJECTS
+# OBJECTS ___________________________________________________________________________________________________
 ttk.Label(menu, text="Menu Principal de Juego").grid(column=0, row=0, sticky='nsew')
 ttk.Button(menu, text="Jugar", command=ventana.destroy).grid(column=0, row=1, sticky='nsew')
 
