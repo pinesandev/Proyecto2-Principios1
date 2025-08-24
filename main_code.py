@@ -62,6 +62,7 @@ def click():
 
     modo_seleccionado.set(configuraciones_de_juego["tipo_partida"])
     dificultad_seleccionada.set(configuraciones_de_juego["dificultad"])
+    dimensiones_seleccionadas.set(configuraciones_de_juego["dimensiones"])
     # cambiar los valores de las variables default para todos los comboboxes
     modo_partida_default.set("selección")
     tiempo_partida_default.set("selección")
@@ -138,7 +139,7 @@ combo_dimensiones.grid(row=8, column=0, sticky='w', pady=(0, 5))
 
 # boton para guardar las configuraciones
 boton_guardar_juego = ttk.Button(cuadro_menu, text="Guardar Configuracion", command=click)
-boton_guardar_juego.grid(row=9, column=0, sticky='w', pady=(10, 10))
+boton_guardar_juego.grid(row=9, column=0, sticky='nsew', pady=(10, 10))
 
 
 # CUADRO | CONTENEDOR DE AREA DE JUEGO ________________________________________________________________________________
