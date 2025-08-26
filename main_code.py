@@ -50,20 +50,63 @@ def dimensiones_dinamicas(evento):
 # R: no tiene restricciones; esta funcion es de uso estrictamente para el GUI
 def tiempo_partida_dinamico(evento):
     selected_type = modo_partida_default.get()
-    
-    # Hide all additional widgets initially
-    etiqueta_tiempo.grid_forget()
-    combo_tiempo.grid_forget()
-    
-    # Check the selection and display widgets if needed
     if selected_type == "Contra Tiempo":
         # Place the widgets in the correct row
         etiqueta_tiempo.grid(row=3, column=0, sticky='w')
         combo_tiempo.grid(row=4, column=0, pady=(0, 5), sticky='w')
+    else:
+        etiqueta_tiempo.grid_forget()
+        combo_tiempo.grid_forget()
+    
+    # Check the selection and display widgets if needed
+    
         
     return
 
-# ACTUALIZAR AREA DE JUEGO
+# CALCULAR CELDA
+# E: toma un strign representativo del tamaño de la cuadricula / laberinto
+# S: retorna el tamaño que debe tener cada celda para que se pueda crear un laberinto de todas las dimensiones en el mismo cuadro
+# R: TBD
+def calcular_celda(dimension):
+    numbers = dimension.split('x')
+    tamaño_celda = min(cuadro_juego2.winfo_width() // int(numbers[0]), cuadro_juego2.winfo_height() // int(numbers[1]))
+    return tamaño_celda
+
+# LIMPIAR CUADRO JUEGO 2
+def limpiar_laberinto():
+    cuadro_juego2 = ttk.Frame(container_juego, padding=10, relief="sunken")
+    cuadro_juego2.grid(row=1, column=0, sticky='nsew')
+    cuadro_juego2.columnconfigure(0, weight=1) # Configure for internal widgets
+
+# VISUALIZAR LABERINTO
+# E:
+# S:
+# R:
+def visualizar_laberinto(matriz):
+    print(configuraciones_de_juego["dimensiones"])
+    tamaño_celda = calcular_celda(configuraciones_de_juego["dimensiones"])
+    print(tamaño_celda)
+    filas = len(matriz)
+    columnas = len(matriz[0])
+    canvas = tk.Canvas(cuadro_juego2, width=columnas*tamaño_celda, height=filas*tamaño_celda, bg="red")
+    for r in range(filas):
+        for c in range(columnas):
+            x1 = c * tamaño_celda
+            y1 = r * tamaño_celda
+            x2 = x1 + tamaño_celda
+            y2 = y1 + tamaño_celda
+            if matriz[r][c] == 1:
+                color = "brown"
+            elif matriz[r][c] == 0:
+                color = "white"
+            elif matriz[r][c] == -1:
+                color = "green"
+            elif matriz[r][c] == 2:
+                color = "yellow"
+            canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
+            canvas.pack()
+            print (matriz[r][c], end=" ")
+    input("waiting to")
 
 # CLICK | Para pruebas boton 'guardar configuracion'
 def click():
@@ -80,21 +123,29 @@ def click():
     # cargar laberinto
     laberinto_cargado = cargar_laberinto(f"archivos/laberintos/{combo_dificultad.get()}/{combo_dimensiones.get()}.txt")
     print(laberinto_cargado)
+    # limpiar_laberinto()
+    visualizar_laberinto(laberinto_cargado)
     
     # paso de valores al area de juego1
     modo_seleccionado.set(configuraciones_de_juego["tipo_partida"])
     dificultad_seleccionada.set(configuraciones_de_juego["dificultad"])
     dimensiones_seleccionadas.set(configuraciones_de_juego["dimensiones"])
     # cambiar los valores de las variables default para todos los comboboxes
-    modo_partida_default.set("selección")
-    tiempo_partida_default.set("selección")
-    dificultad_default.set("selección")
-    dimension_default.set("selección")
-    # esconder los widgets de tiempo luego del reset
-    etiqueta_tiempo.grid_forget()
-    combo_tiempo.grid_forget()
+    # modo_partida_default.set("selección")
+    # tiempo_partida_default.set("selección")
+    # dificultad_default.set("selección")
+    # dimension_default.set("selección")
+    # # esconder los widgets de tiempo luego del reset
+    # etiqueta_tiempo.grid_forget()
+    # combo_tiempo.grid_forget()
     print("reset completado")
     print(configuraciones_de_juego)
+
+    width = cuadro_juego2.winfo_width()
+    height = cuadro_juego2.winfo_height()
+    print(f"Canvas size: {width}x{height} pixels")
+
+    calcular_celda(combo_dimensiones.get())
 
 
 # CONFIGURACION DE VENTANA PRINCIPAL __________________________________________________________________________________
@@ -163,6 +214,10 @@ combo_dimensiones.grid(row=8, column=0, sticky='w', pady=(0, 5))
 boton_guardar_juego = ttk.Button(cuadro_menu, text="Guardar Configuracion", command=click)
 boton_guardar_juego.grid(row=9, column=0, sticky='nsew', pady=(10, 10))
 
+# etiqueta ranking
+menu = ttk.Label(cuadro_menu, text="Ranking", font=("Courier", 20, "bold"))
+menu.grid(row=10, column=0, pady=(25, 15))
+
 
 # CUADRO | CONTENEDOR DE AREA DE JUEGO ________________________________________________________________________________
 # un cuadro para contener los 2 cuadros que se van a incluir
@@ -220,10 +275,5 @@ etiqueta_dimension_valor.grid(row=1, column=3, sticky='w')
 cuadro_juego2 = ttk.Frame(container_juego, padding=10, relief="sunken")
 cuadro_juego2.grid(row=1, column=0, sticky='nsew')
 cuadro_juego2.columnconfigure(0, weight=1) # Configure for internal widgets
-
-# Placeholder for the maze display
-maze_canvas = tk.Canvas(cuadro_juego2, bg="white", highlightthickness=1, highlightbackground="black")
-maze_canvas.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
-cuadro_juego2.rowconfigure(0, weight=1) # The canvas takes up all available vertical space
 
 ventana_principal.mainloop()
