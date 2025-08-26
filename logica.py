@@ -24,13 +24,13 @@ R: El archivo debe existir
                 continue
             if linea == '': 
                 continue
-            fila = [int(celda) for celda in linea.strip().split()]
+            fila = [int(celda) for celda in linea.split()]
             laberinto.append(fila)
     return laberinto
 
 
 # ---------------------------- VALIDAR MATRIZ ---------------------------
-def validar_laberitnto(matriz):
+def validar_laberinto(matriz):
 
     ''' 
 FUNCION PARA VALIDAR QUE LA MATRIZ CARGADA CONTENGA UN LABERINTO VALIDO
@@ -144,7 +144,7 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
         }
     
     # Si pasa todas las validaciones, el laberinto es valido
-    return {
+    resultado = {
         "valido": True,
         "mensaje": "El laberinto es valido.",
         "cantidad_filas": cantidad_filas,
@@ -153,6 +153,7 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
         "posicion_meta": posicion_meta
     }       
             
+    return resultado
 
 
 
