@@ -7,8 +7,26 @@ configuraciones_de_juego = {"tipo_partida":None, "tiempo":None, "dificultad":Non
 laberinto_cargado = []
 
 # FUNCIONES ___________________________________________________________________________________________________________
+# CARGAR LABERINTO
+# E: Ruta al archivo de texto que contiene el laberinto seleccionada por el usuario en el UI
+# S: Devuelve una matriz que representa el laberinto seleccionado
+# R: El archivo debe existir
+def cargar_laberinto(ruta): 
+    laberinto = []
+    with open(ruta, 'r') as archivo: # with abre y cierra el archivo automaticamente
+        for linea in archivo:
+            # Ignorar líneas que comienzan con '#' o espacio en blanco
+            linea = linea.strip()
+            if linea.startswith('#'):
+                continue
+            if linea == '': 
+                continue
+            fila = [int(celda) for celda in linea.strip().split(',')]
+            laberinto.append(fila)
+    return laberinto
+
 # DIMENSIONES_DINAMICAS
-# E: estaa funcion se suple de un evento creado a la hora de seleccionar una opcion en el combobox de 'dificultad'
+# E: esta funcion se suple de un evento creado a la hora de seleccionar una opcion en el combobox de 'dificultad'
 # S: no tiene salidas; el proposito de esta funcion es cambiar los valores disponibles en el combobox de 'dimensiones' en base a la dificultad seleccionada
 # R: no tiene restricciones; es una funcion de uso estrictamente para el GUI
 def dimensiones_dinamicas(evento):
@@ -21,11 +39,10 @@ def dimensiones_dinamicas(evento):
     elif dificultad_seleccionada == "Difícil":
         dimension_opciones = ["14x14", "15x15", "16x16"] # dimensiones dificiles
     else:
-        dimension_opciones = ["selección"] # seleccion default
+        dimension_opciones = ["selección"] # seleccion default 
     # se asignan los valores en base a las condicionales
     combo_dimensiones["values"] = dimension_opciones
     combo_dimensiones.set(dimension_opciones[0])
-
 
 # TIEMPO_PARTIDA_DINAMICO
 # E: esta funcion se suple de un evento creado a la hora de seleccionar una opcion en el combobox de 'partida'
@@ -46,11 +63,11 @@ def tiempo_partida_dinamico(evento):
         
     return
 
-
 # ACTUALIZAR AREA DE JUEGO
 
-# CLICK | Para pruebas botones
+# CLICK | Para pruebas boton 'guardar configuracion'
 def click():
+    global laberinto_cargado
     global configuraciones_de_juego
     print(configuraciones_de_juego)
     print("click")
@@ -60,6 +77,11 @@ def click():
     configuraciones_de_juego["dificultad"] = combo_dificultad.get()
     configuraciones_de_juego["dimensiones"] = combo_dimensiones.get()
 
+    # cargar laberinto
+    laberinto_cargado = cargar_laberinto(f"archivos/laberintos/{combo_dificultad.get()}/{combo_dimensiones.get()}.txt")
+    print(laberinto_cargado)
+    
+    # paso de valores al area de juego1
     modo_seleccionado.set(configuraciones_de_juego["tipo_partida"])
     dificultad_seleccionada.set(configuraciones_de_juego["dificultad"])
     dimensiones_seleccionadas.set(configuraciones_de_juego["dimensiones"])
@@ -78,7 +100,7 @@ def click():
 # CONFIGURACION DE VENTANA PRINCIPAL __________________________________________________________________________________
 ventana_principal = tk.Tk()
 ventana_principal.title("Laberinto")
-ventana_principal.geometry("1000x600")
+ventana_principal.geometry("1000x750")
 ventana_principal.resizable(False, False) # ventana de tamano inmutable
 ventana_principal.columnconfigure(0, weight=1) # 10% for the menu
 ventana_principal.columnconfigure(1, weight=9) # 90% for the main game area
@@ -147,8 +169,8 @@ boton_guardar_juego.grid(row=9, column=0, sticky='nsew', pady=(10, 10))
 container_juego = ttk.Frame(ventana_principal)
 container_juego.grid(row=0, column=1, sticky='nsew')
 container_juego.columnconfigure(0, weight=1) # La unica columna del area de juego general se extiende a lo largo
-container_juego.rowconfigure(0, weight=2)
-container_juego.rowconfigure(1, weight=8)
+container_juego.rowconfigure(0, weight=1)
+container_juego.rowconfigure(1, weight=9)
 
 
 # CUADRO | AREA DE JUEGO 1 ____________________________________________________________________________________________
@@ -178,10 +200,19 @@ etiqueta_dificultad_valor.grid(row=1, column=1, sticky='w')
 dimensiones_seleccionadas = tk.StringVar()
 # etiqueta para mostrar el modo de juego seleccionado
 etiqueta_dimension_area1 = ttk.Label(cuadro_juego1, text=f"Tamaño del Laberinto:", font=("Courier", 16, "bold"), padding=5)
-etiqueta_dimension_area1.grid(row=2, column=0, sticky='w')
+etiqueta_dimension_area1.grid(row=0, column=2, sticky='w')
 # etiqueta para mostrar el valor del modo de juego seleccionado
 etiqueta_dimension_valor = ttk.Label(cuadro_juego1, textvariable=dimensiones_seleccionadas, font=("Courier", 14,), padding=5)
-etiqueta_dimension_valor.grid(row=2, column=1, sticky='w')
+etiqueta_dimension_valor.grid(row=0, column=3, sticky='w')
+
+# variable para actualizar el tiempo de juego y mostrarlo en el area de juego
+contador_tiempo = tk.IntVar()
+# etiqueta para mostrar el modo de juego seleccionado
+etiqueta_tiempo_area1 = ttk.Label(cuadro_juego1, text=f"Tiempo de Juego:", font=("Courier", 16, "bold"), padding=5)
+etiqueta_tiempo_area1.grid(row=1, column=2, sticky='w')
+# etiqueta para mostrar el valor del modo de juego seleccionado
+etiqueta_dimension_valor = ttk.Label(cuadro_juego1, textvariable=contador_tiempo, font=("Courier", 14,), padding=5)
+etiqueta_dimension_valor.grid(row=1, column=3, sticky='w')
 
 
 # CUADRO | AREA DE JUEGO 2 ____________________________________________________________________________________________
