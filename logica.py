@@ -1,3 +1,4 @@
+import time
 
 # ---------------------------- FUNCIONES ----------------------------
 
@@ -24,10 +25,11 @@ R: El archivo debe existir
                 continue
             if linea == '': 
                 continue
-            fila = [int(celda) for celda in linea.split()]
+            fila = [int(celda) for celda in linea.split(',')]
             laberinto.append(fila)
     return laberinto
 
+laberinto = cargar_laberinto('/Users/johel/Desktop/Johel/Johel/TEC Johel/Principios de Progra/Proyectos/Proyecto2-Principios1/archivos/laberintos/Fácil/8x8.txt')
 
 # ---------------------------- VALIDAR MATRIZ ---------------------------
 def validar_laberinto(matriz):
@@ -155,6 +157,67 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
             
     return resultado
 
+
+
+# ---------------------------- CARGAR RANKINGS ---------------------------
+    '''
+FUNCION PARA CARGAR RANKINGS DESDE UN ARCHIVO DE TEXTO
+E: Ruta al archivo de texto que contiene los rankings
+S: Devuelve una matriz con rankings 
+R: El archivo debe existir
+    ''' 
+
+# ---------------------------- CARGAR RANKING ---------------------------
+
+def cargar_rankings(ruta):
+    rankings = []
+    with open(ruta, 'r') as archivo: 
+        for linea in archivo:
+            linea = linea.strip()
+            if linea.startswith('#'):
+                continue
+            if linea == '':
+                continue
+            fila = [valor for valor in linea.split(',')]
+            rankings+=[fila]            
+    return rankings
+
+rankings = cargar_rankings('/Users/johel/Desktop/Johel/Johel/TEC Johel/Principios de Progra/Proyectos/Proyecto2-Principios1/archivos/rankings.txt')
+
+# ---------------------------- FORMATO TIEMPO RANKING ---------------------------
+
+def formatear_tiempo(string_tiempo):
+    tiempo = time.strptime(string_tiempo, '%H:%M:%S')
+    return tiempo.tm_hour*3600 + tiempo.tm_min*60 + tiempo.tm_sec
+
+# ---------------------------- VALIDAR RANKING ---------------------------
+
+def validar_ranking(rankings):
+
+    # Misma cantidad de columnas en todas las filas 
+
+    cantidad_filas = len(rankings)
+    cantidad_columnas = len(rankings[0])
+
+    for indice_fila in range(cantidad_filas):
+        if len(rankings[indice_fila]) != cantidad_columnas:
+                print(f'ERROR. Fila {indice_fila+1} debe tener solo 4 columnas.')
+    
+    # Se instancia un diccionario con las claves y sus valores para facil acceso 
+
+    filas_validas = []
+    for fila in rankings:
+        valores_ranking = {
+            'tiempo': fila[0],
+            'nombre': fila[1],
+            'dimensiones': fila[2],
+            'movimientos': fila[3]
+        }
+    filas_validas.append(valores_ranking)
+    print(filas_validas)
+
+
+validar_ranking(rankings)
 
 
 
