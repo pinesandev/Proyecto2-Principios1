@@ -188,37 +188,107 @@ rankings = cargar_rankings('/Users/johel/Desktop/Johel/Johel/TEC Johel/Principio
 
 def formatear_tiempo(string_tiempo):
     tiempo = time.strptime(string_tiempo, '%H:%M:%S')
-    return tiempo.tm_hour*3600 + tiempo.tm_min*60 + tiempo.tm_sec
-
+    segundos = tiempo.tm_hour*3600 + tiempo.tm_min*60 + tiempo.tm_sec
+    print(segundos)
+    return int(segundos)
 # ---------------------------- VALIDAR RANKING ---------------------------
-
 def validar_ranking(rankings):
 
-    # Misma cantidad de columnas en todas las filas 
-
-    cantidad_filas = len(rankings)
-    cantidad_columnas = len(rankings[0])
-
-    for indice_fila in range(cantidad_filas):
-        if len(rankings[indice_fila]) != cantidad_columnas:
-                print(f'ERROR. Fila {indice_fila+1} debe tener solo 4 columnas.')
-    
-    # Se instancia un diccionario con las claves y sus valores para facil acceso 
-
     filas_validas = []
-    for fila in rankings:
-        valores_ranking = {
-            'tiempo': fila[0],
-            'nombre': fila[1],
-            'dimensiones': fila[2],
-            'movimientos': fila[3]
-        }
-    filas_validas.append(valores_ranking)
-    print(filas_validas)
+    errores = False # Acumulador de errores. En los testings se descubrio que usar continue, hace que si hay mas de un bug en una sola fila, solo se imprime el error del primer bug 
 
+    # 1. Validar misma cantidad de columnas en todas las filas  
+    for indice_fila in range(len(rankings)):
+        fila = rankings[indice_fila]
+        if len(fila) != 4: # ranking siempre va a ser de 4 columnas, por lo que podemos 'hardcode' 4 
+            print(f'ERROR. Fila {indice_fila+1} debe tener solamente 4 columnas')
+            errores = True
+    
+        # Columnas de valores de las filas de la matriz de rankings
+        tiempo = fila[0].strip()
+        nombre = fila[1].strip().lower()
+        dimensiones = fila[2].strip()
+        movimientos = fila[3].strip()
+
+        # 2. Validar que exista un formato de tiempo valido HH:MM:SS
+        try:   
+            horas, minutos, segundos = map(int, (tiempo.split(":"))) # map toma cada columna que devuelve split y lo transforma a int
+            if horas < 0 or minutos < 0 or minutos > 59 or segundos < 0 or segundos > 59:
+                print(f"ERROR: Tiempo invalido en {indice_fila+1}")  
+                errores = True
+        except ValueError:  # si en tiempo hay letras por ejemplo, se ejecuta el ValueError 
+            print(f"ERROR: Tiempo invalido en {indice_fila+1}")
+            errores = True
+        
+         # 3. Validar nombre correcto 
+        if nombre == '':
+            print(f"ERROR: Nombre vacio en fila {indice_fila+1}")
+            errores = True  
+        
+        # 4. Validar dimensiones 
+        if 'x' not in dimensiones:   
+            print(f"ERROR: Dimension invalida en fila {indice_fila+1}")
+            errores = True
+
+        # Validar que las dimensiones sean solo de dos partes
+        partes_dimensiones = dimensiones.split('x')
+        if len(partes_dimensiones) != 2:
+            print(f"ERROR: Dimensiones invalidas en fila {indice_fila+1}")
+            errores = True
+
+        fil, col = partes_dimensiones[0], partes_dimensiones[1]
+        try:   # Valida que se puedan convertir las filas y columnas a int 
+            fil = int(fil)
+            col = int(col)
+            if fil <= 0 or col <= 0:
+                print(f"ERROR: Dimensiones invalidas en fila {indice_fila+1}")
+                errores = True
+        except ValueError:
+            print(f"ERROR: Dimensiones invalidas en fila {indice_fila+1}")
+            errores = True
+
+        # 5. Validar movimientos 
+        try:
+            movimientos = int(movimientos)
+            if movimientos <= 0:
+                print(f"ERROR: Movimientos invalidos en fila {indice_fila+1}")
+                errores = True
+        except ValueError:
+            print(f"ERROR: Movimientos invalidos en fila {indice_fila+1}")
+            errores = True
+        
+        if errores:
+            continue
+            
+        registro = {
+            'tiempo': tiempo,
+            'nombre': nombre.capitalize(),
+            'dimensiones': dimensiones,
+            'movimientos': movimientos,
+            'segundos': formatear_tiempo(tiempo)
+        }
+
+        filas_validas.append(registro)
+
+    return filas_validas
 
 validar_ranking(rankings)
 
+ranking_valido = validar_ranking(rankings)
+print(ranking_valido)
 
+# ---------------------------- ORDENAR RANKING ---------------------------
 
+def ordenar_ranking(ranking_valido):
 
+    # filas = len(ranking_valido)
+    # tiempo = []
+    # segundos = []
+    # for i_filas in range(filas):
+    #     tiempo = ranking_valido[i_filas]["tiempo"]
+    #     segundos = formatear_tiempo(tiempo)
+    # print(segundos)
+
+# ordenar_ranking(ranking_valido)
+    
+    
