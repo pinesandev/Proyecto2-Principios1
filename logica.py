@@ -79,9 +79,19 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
                 "posicion_inicio": None,
                 "posicion_meta": None
             }
+        
+    # Validar cap maximo de las dimensiones del laberinto
+    if cantidad_filas > 20 or cantidad_columnas > 20:
+        return {
+                "valido": False,
+                "mensaje": "No se permiten dimensiones mayores a 20x20",
+                "cantidad_filas": cantidad_filas,
+                "cantidad_columnas": cantidad_columnas,
+                "posicion_inicio": None,
+                "posicion_meta": None
+            }
     
     # Validar que solo existan los valores permitidos, una sola posicion de inicio y una sola posicion de meta
-
     valores_permitidos = {-1, 0, 1, 2} # Se instancia un set con los valores permitidos del laberinto
     posicion_inicio = None
     posicion_meta = None
@@ -113,7 +123,7 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
                 posicion_meta = (indice_fila, indice_columna)
 
     # Validar que exista un inicio y una meta
-    if cantidad_metas == 0 and cantidad_inicios == 0:
+    if cantidad_metas == 0 or cantidad_inicios == 0:
         return {
             "valido": False,
             "mensaje": "Debe existir exactamente UN inicio (-1) y UNA meta (2). No se encontraron inicios ni metas.",
@@ -157,19 +167,17 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
             
     return resultado
 
+laberinto_valido = validar_laberinto(laberinto)
 
-
-# ---------------------------- CARGAR RANKINGS ---------------------------
+# ---------------------------- CARGAR RANKING ---------------------------
+def cargar_rankings(ruta):
     '''
 FUNCION PARA CARGAR RANKINGS DESDE UN ARCHIVO DE TEXTO
 E: Ruta al archivo de texto que contiene los rankings
 S: Devuelve una matriz con rankings 
 R: El archivo debe existir
-    ''' 
 
-# ---------------------------- CARGAR RANKING ---------------------------
-
-def cargar_rankings(ruta):
+    '''
     rankings = []
     with open(ruta, 'r') as archivo: 
         for linea in archivo:
@@ -187,10 +195,11 @@ rankings = cargar_rankings('/Users/johel/Desktop/Johel/Johel/TEC Johel/Principio
 # ---------------------------- FORMATO TIEMPO RANKING ---------------------------
 
 def formatear_tiempo(string_tiempo):
+
     tiempo = time.strptime(string_tiempo, '%H:%M:%S')
     segundos = tiempo.tm_hour*3600 + tiempo.tm_min*60 + tiempo.tm_sec
-    print(segundos)
     return int(segundos)
+
 # ---------------------------- VALIDAR RANKING ---------------------------
 def validar_ranking(rankings):
 
@@ -205,7 +214,7 @@ def validar_ranking(rankings):
             errores = True
     
         # Columnas de valores de las filas de la matriz de rankings
-        tiempo = fila[0].strip()
+        tiempo = fila[0]
         nombre = fila[1].strip().lower()
         dimensiones = fila[2].strip()
         movimientos = fila[3].strip()
@@ -272,23 +281,33 @@ def validar_ranking(rankings):
 
     return filas_validas
 
-validar_ranking(rankings)
-
 ranking_valido = validar_ranking(rankings)
-print(ranking_valido)
 
 # ---------------------------- ORDENAR RANKING ---------------------------
+# FUNCION AUXILIAR 
+def clave_segundos(fila):
+    return fila["segundos"]
 
 def ordenar_ranking(ranking_valido):
 
-    # filas = len(ranking_valido)
-    # tiempo = []
-    # segundos = []
-    # for i_filas in range(filas):
-    #     tiempo = ranking_valido[i_filas]["tiempo"]
-    #     segundos = formatear_tiempo(tiempo)
-    # print(segundos)
+    # RANKEADO BURBUJA 
+    # largo_ranking = len(ranking_valido)
 
-# ordenar_ranking(ranking_valido)
-    
-    
+    # for pasadas in range(largo_ranking):
+    #     limite = largo_ranking - pasadas - 1    
+                          
+    #     for j in range(limite):
+    #         tiempo_actual = ranking_valido[j]["segundos"]
+    #         tiempo_siguiente = ranking_valido[j+1]["segundos"]
+
+    #         if tiempo_actual > tiempo_siguiente:
+                
+    #             temp = ranking_valido[j]
+    #             ranking_valido[j] = ranking_valido[j+1]
+    #             ranking_valido[j+1] = temp
+
+    ranking_valido.sort(key=clave_segundos)
+    return ranking_valido
+
+ranking_ordenado = ordenar_ranking(ranking_valido)
+print(ranking_ordenado)
