@@ -1,72 +1,74 @@
-# IMPORTS / LIBRARIES
 import tkinter as tk
 from tkinter import ttk
+from random import shuffle
 
-# CLASSES _________________________________________________________________________________________________________________________________
-# CLASE BLOQUE-----------------------------------------------------------------------------------------------------------------------------
+# CLASES __________________________________________________________________________________________________________________________________
 class bloque:
-    def __init__(self, cuadro_2_canvas, cuadro_bloque, fila, columna, valor_bloque):
-        self.cuadro_2_canvas = cuadro_2_canvas # cuadro de juego conteniendo todos los bloques; tipo canvaws de tkinter
-        self.cuadro_bloque = cuadro_bloque # informacion sobre el cuadro de bloque que se crea para cada celda del laberinto
-        self.fila = fila
-        self.columna = columna
-        self.valor_bloque = valor_bloque  # -1: inicio, 0: camino abierto, 1: pared, 2: meta
-        self.visitado = False # para modificar el bloque al ser visitado durante el juego
+    def __init__(self, canvas_widget, rect_id, fila, columna, valor_bloque): # clase para instanciar un bloque individual en el laberinto; cuadro juego 2
+        self.canvas_widget = canvas_widget
+        self.rect_id = rect_id
+        self.row = fila
+        self.col = columna
+        self.value = valor_bloque  # -1: inicio, 0: camino abierto, 1: pared, 2: meta
+        self.is_visited = False
 
-    # *** FUNCIONES DE CLASE ***
-    def set_color(self, color): # metodo para cambiar el valor y color del widget
-        self.cuadro_2_canvas.itemconfigure(self.cuadro_bloque, fill=color)
-
-    def get_color(self): # metodo para obtener el color del
-        if self.valor_bloque== 1:
+    def set_color(self, color):
+        """Método para cambiar el color del rectángulo en el canvas."""
+        self.canvas_widget.itemconfigure(self.rect_id, fill=color)
+        
+    def get_color(self):
+        """Método para retornar el color apropiado para el valor del bloque."""
+        if self.value == 1:
             return "brown"  # Pared
-        elif self.valor_bloque == 2:
+        elif self.value == 2:
             return "yellow" # Final
-        elif self.valor_bloque == -1:
+        elif self.value == -1:
             return "green"  # Inicio
         else:
             return "white" # Camino
-        
 
-# CLASE PARTIDA----------------------------------------------------------------------------------------------------------------------------
-class partida:
-    def __init__(self, ventana_root):
-        self.ventana_root = ventana_root
-        # configuracion de la ventana
-        self.ventana_root.title("Laberinto")
-        self.ventana_root.geometry("1050x850")
-        # self.ventana_root.resizeable(False, False)
-        self.ventana_root.columnconfigure(0, weight=3, minsize=250)
-        self.ventana_root.columnconfigure(1, weight=7)
-        self.ventana_root.rowconfigure(0, weight=1)
-        # configuraciones y variables de juego
+class juego_laberinto:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Laberinto")
+        self.root.geometry("1000x800")
+        self.root.resizable(True, True)
+
+        # Atributos de la clase (reemplazan a las variables globales)
         self.configuraciones_de_juego = {"tipo_partida": "Normal", "tiempo": None, "dificultad": "Fácil", "dimensiones": "8x8"}
         self.ranking_en_memoria = []
         self.laberinto_en_memoria = []
-        self.bloque_matriz = []
-        self.posicion_actual_totem = None
-        self.totem_d = None
+        self.bloque_matrix = []
+        self.current_position = None
+        self.totem_id = None
+        
+        # Estilo para los botones
+        self.estilo_default_botones = ttk.Style()
+        self.estilo_default_botones.configure('estilo_custom.TButton', font=('Courier', 14, 'bold'))
+
+        # Configuración de la cuadrícula principal
+        self.root.columnconfigure(0, weight=3, minsize=250)
+        self.root.columnconfigure(1, weight=7)
+        self.root.rowconfigure(0, weight=1)
+
+        # Contenedor del área de juego
+        self.container_juego = ttk.Frame(root)
+        self.container_juego.grid(row=0, column=1, sticky='nsew')
+        self.root.rowconfigure(0, weight=1)
+        self.container_juego.columnconfigure(0, weight=1)
+        self.container_juego.rowconfigure(0, weight=0)
+        self.container_juego.rowconfigure(1, weight=1)
+
+        # CUADRO | AREA DE JUEGO 1
+        self.cuadro_juego1 = ttk.Frame(self.container_juego, padding=15)
+        self.cuadro_juego1.grid(row=0, column=0, sticky='nsew')
+        self.cuadro_juego1.columnconfigure((0, 1, 2, 3), weight=1)
+
         self.modo_seleccionado = tk.StringVar(value=self.configuraciones_de_juego["tipo_partida"])
         self.dificultad_seleccionada = tk.StringVar(value=self.configuraciones_de_juego["dificultad"])
         self.dimensiones_seleccionadas = tk.StringVar(value=self.configuraciones_de_juego["dimensiones"])
         self.contador_tiempo = tk.IntVar()
-        # estilo para los botones
-        self.estilo_default_botones = ttk.Style()
-        self.estilo_default_botones.configure('estilo_custom.TButton', font=('Courier', 14, 'bold'))
-        
-        # cuadro ventana de juego
-        self.ventana_juego = ttk.Frame(ventana_root)
-        self.ventana_juego.grid(row=0, column=1, sticky='nsew')
-        self.ventana_juego.columnconfigure(0, weight=1)
-        self.ventana_juego.rowconfigure(0, weight=0)
-        self.ventana_juego.rowconfigure(1, weight=1)
 
-        # cuadro area de juego 1
-        self.cuadro_juego1 = ttk.Frame(self.ventana_juego, padding=15)
-        self.cuadro_juego1.grid(row=0, column=0, sticky='nsew')
-        self.cuadro_juego1.columnconfigure((0, 1, 2, 3), weight=1)
-        
-        # widgets para area de juego 1 de cada partida
         ttk.Label(self.cuadro_juego1, text="Modo:", font=("Courier", 16, "bold")).grid(column=0, row=0, sticky='w')
         ttk.Label(self.cuadro_juego1, textvariable=self.modo_seleccionado, font=("Courier", 14,)).grid(column=1, row=0, sticky='w')
         
@@ -84,21 +86,20 @@ class partida:
         ttk.Button(self.cuadro_juego1, text="Auto completar", command=self.autocompletar_laberinto, style='estilo_custom.TButton').grid(column=2, row=2, sticky='nsew')
         ttk.Button(self.cuadro_juego1, text="Abandonar", command=self.abandonar_partida, style='estilo_custom.TButton').grid(column=3, row=2, sticky='nsew')
 
-        # *** CUADRO AREA DE JUEGO 2 ***
-        self.cuadro_juego2 = ttk.Frame(self.ventana_juego, relief="sunken")
+        # CUADRO | AREA DE JUEGO 2
+        self.cuadro_juego2 = ttk.Frame(self.container_juego, relief="sunken")
         self.cuadro_juego2.grid(column=0, row=1, sticky='nsew')
         self.cuadro_juego2.columnconfigure(0, weight=1)
         self.cuadro_juego2.rowconfigure(0, weight=1)
 
-        self.canvas_laberinto = tk.Canvas(self.cuadro_juego2, bg="lightgray", highlightthickness=0)
-        self.canvas_laberinto.pack(fill="both", expand=True, anchor="center")
+        self.maze_canvas = tk.Canvas(self.cuadro_juego2, bg="lightgray", highlightthickness=0)
+        self.maze_canvas.pack(fill="both", expand=True, anchor="center")
 
-        # *** CUADRO MENU *** 
-        self.cuadro_menu = ttk.Frame(ventana_root, padding=15, relief="raised")
+        # CUADRO | MENU DE JUEGO
+        self.cuadro_menu = ttk.Frame(root, padding=15, relief="raised")
         self.cuadro_menu.grid(row=0, column=0, sticky='nsew')
         self.cuadro_menu.columnconfigure(0, weight=1)
 
-        # widgets para cuadro menu
         ttk.Label(self.cuadro_menu, text="Menu", font=("Courier", 20, "bold")).grid(row=0, column=0, pady=(0, 15))
         
         ttk.Label(self.cuadro_menu, text="Modo de Juego", font=("Courier", 14, "bold", "italic")).grid(row=1, column=0, sticky='w')
@@ -135,71 +136,58 @@ class partida:
         self.ranking_treeview.column("Tamaño", width=60, anchor=tk.W)
         self.ranking_treeview.column("Pasos", width=60, anchor=tk.W)
 
-        # *** CARGAR DATOS INICIALES DE PARTIDA ***
+        # Cargar datos iniciales
         self.dimensiones_dinamicas(None)
         self.guardar_configuraciones()
         self.ranking_en_memoria = self.cargar_rankings("archivos/rankings.txt")
         self.mostrar_ranking()
 
-        # *** VICULAR EVENTOS ***
-        self.ventana_root.bind("<Configure>", self.on_resize)
-        self.ventana_root.bind("<Key>", self.handle_key_press)
+        # Vincular eventos
+        self.root.bind("<Configure>", self.on_resize)
+        self.root.bind("<Key>", self.handle_key_press)
+        
+    # FUNCIONES ___________________________________________________________________________________________________________________________
 
-
-    # FUNCIONES DE CLASE
-    # CARGAR LABERINTO ------------------------------------------------------------------------------------------------------------------------
-    # E: Ruta al archivo de texto que contiene el laberinto seleccionada por el usuario en el UI
-    # S: Devuelve una matriz que representa el laberinto seleccionado
-    # R: El archivo debe existir
     def cargar_laberinto(self, ruta):
-            laberinto = []
-            try:
-                with open(ruta, 'r') as archivo:
-                    for linea in archivo:
-                        linea = linea.strip()
-                        if linea.startswith('#') or linea == '':
-                            continue
-                        fila = [int(celda) for celda in linea.strip().split(',')]
-                        laberinto.append(fila)
-            except FileNotFoundError:
-                print(f"Error: Archivo no encontrado en {ruta}")
-                return None
-            return laberinto
+        laberinto = []
+        try:
+            with open(ruta, 'r') as archivo:
+                for linea in archivo:
+                    linea = linea.strip()
+                    if linea.startswith('#') or linea == '':
+                        continue
+                    fila = [int(celda) for celda in linea.strip().split(',')]
+                    laberinto.append(fila)
+        except FileNotFoundError:
+            print(f"Error: Archivo no encontrado en {ruta}")
+            return None
+        return laberinto
 
-    # CARGAR RANKING --------------------------------------------------------------------------------------------------------------------------
-    # E: Ruta al archivo de texto que contiene el ranking guardado
-    # S: Devuelve una matriz que representa el ranking
-    # R: El archivo debe existir
     def cargar_rankings(self, ruta):
-            lista_ranking = []
-            try:
-                with open(ruta, 'r') as archivo: 
-                    for linea in archivo:
-                        linea = linea.strip()
-                        if linea.startswith('#') or linea == '':
-                            continue
-                        fila = [valor for valor in linea.split(',')]
-                        lista_ranking.append(fila)
-            except FileNotFoundError:
-                print(f"*** Error: Archivo de ranking no encontrado en {ruta} ***")
-                return []
-            return lista_ranking
+        rankings = []
+        try:
+            with open(ruta, 'r') as archivo: 
+                for linea in archivo:
+                    linea = linea.strip()
+                    if linea.startswith('#') or linea == '':
+                        continue
+                    fila = [valor for valor in linea.split(',')]
+                    rankings.append(fila)
+        except FileNotFoundError:
+            print(f"Error: Archivo de ranking no encontrado en {ruta}")
+            return []
+        return rankings
 
-    # MOSTRAR RANKING --------------------------------------------------------------------------------------------------------------------------
-    # E:  
-    # S: 
-    # R: 
     def mostrar_ranking(self):
-            for item in self.ranking_treeview.get_children(): # ciclo para limpiar el widget 'ranking_treeview'
-                self.ranking_treeview.delete(item)
-            
-            for fila in self.ranking_en_memoria: # cargar datos nuevamente
-                self.ranking_treeview.insert("", "end", values=fila)
+        """Muestra los datos del ranking en el Treeview."""
+        # Limpiar Treeview
+        for item in self.ranking_treeview.get_children():
+            self.ranking_treeview.delete(item)
+        
+        # Insertar nuevos datos
+        for fila in self.ranking_en_memoria:
+            self.ranking_treeview.insert("", "end", values=fila)
 
-    # GUARDAR CONFIGURACIONES -----------------------------------------------------------------------------------------------------------------
-    # E: no tiene entradas; la funcion se encarga de guardar las selecciones del usuario en la variable global 'configuraciones_de_juego'
-    # S: no tiene salidas; el resultado de invocar la funcion es modificar la variable global donde se guardan las configuraciones de juego antes de comenzar
-    # R: TBD
     def guardar_configuraciones(self):
         self.configuraciones_de_juego["tipo_partida"] = self.combo_partida.get()
         if self.combo_partida.get() == "Contra Tiempo":
@@ -249,14 +237,14 @@ class partida:
             print("No hay laberinto cargado para visualizar.")
             return
 
-        self.canvas_laberinto.delete("all")
-        self.bloque_matriz.clear()
+        self.maze_canvas.delete("all")
+        self.bloque_matrix.clear()
 
-        ancho_cuadro = self.canvas_laberinto.winfo_width()
-        alto_cuadro = self.canvas_laberinto.winfo_height()
+        ancho_cuadro = self.maze_canvas.winfo_width()
+        alto_cuadro = self.maze_canvas.winfo_height()
 
         if ancho_cuadro <= 1 or alto_cuadro <= 1:
-            self.canvas_laberinto.after(10, self.visualizar_laberinto)
+            self.maze_canvas.after(10, self.visualizar_laberinto)
             return
 
         filas = len(self.laberinto_en_memoria)
@@ -273,9 +261,9 @@ class partida:
                 
                 maze_value = self.laberinto_en_memoria[r][c]
                 
-                rect_id = self.canvas_laberinto.create_rectangle(x1, y1, x2, y2, outline="gray")
+                rect_id = self.maze_canvas.create_rectangle(x1, y1, x2, y2, outline="gray")
                 
-                new_bloque = bloque(self.canvas_laberinto, rect_id, r, c, maze_value)
+                new_bloque = bloque(self.maze_canvas, rect_id, r, c, maze_value)
                 new_bloque.set_color(new_bloque.get_color())
 
                 row_of_bloques.append(new_bloque)
@@ -283,17 +271,17 @@ class partida:
                 if maze_value == -1:
                     self.current_position = (r, c)
 
-            self.bloque_matriz.append(row_of_bloques)
+            self.bloque_matrix.append(row_of_bloques)
             
         self.draw_totem(self.current_position)
 
     def draw_totem(self, position):
         """Dibuja el tótem (un pequeño círculo) en un bloque dado."""
-        self.canvas_laberinto.delete("totem")
+        self.maze_canvas.delete("totem")
         r, c = position
         
-        cell_size = min(self.canvas_laberinto.winfo_width() // len(self.laberinto_en_memoria[0]), 
-                        self.canvas_laberinto.winfo_height() // len(self.laberinto_en_memoria))
+        cell_size = min(self.maze_canvas.winfo_width() // len(self.laberinto_en_memoria[0]), 
+                        self.maze_canvas.winfo_height() // len(self.laberinto_en_memoria))
         
         x_center = c * cell_size + cell_size / 2
         y_center = r * cell_size + cell_size / 2
@@ -305,7 +293,7 @@ class partida:
         x2 = x_center + totem_size
         y2 = y_center + totem_size
         
-        self.totem_id = self.canvas_laberinto.create_oval(x1, y1, x2, y2, fill="blue", tags="totem")
+        self.totem_id = self.maze_canvas.create_oval(x1, y1, x2, y2, fill="blue", tags="totem")
 
     def handle_key_press(self, event):
         """Maneja las pulsaciones de tecla para mover el tótem."""
@@ -328,30 +316,30 @@ class partida:
             0 <= new_c < len(self.laberinto_en_memoria[0]) and
             self.laberinto_en_memoria[new_r][new_c] != 1):
             
-            old_bloque = self.bloque_matriz[r][c]
-            if old_bloque.valor_bloque == 0 and not old_bloque.visitado:
+            old_bloque = self.bloque_matrix[r][c]
+            if old_bloque.value == 0 and not old_bloque.is_visited:
                 old_bloque.set_color("lightblue")
-                old_bloque.visitado = True
+                old_bloque.is_visited = True
                 
             self.current_position = (new_r, new_c)
             self.draw_totem(self.current_position)
             
             if self.laberinto_en_memoria[new_r][new_c] == 2:
                 print("¡Has llegado al final!")
-                self.canvas_laberinto.create_text(
-                    self.canvas_laberinto.winfo_width() / 2,
-                    self.canvas_laberinto.winfo_height() / 2,
+                self.maze_canvas.create_text(
+                    self.maze_canvas.winfo_width() / 2,
+                    self.maze_canvas.winfo_height() / 2,
                     text="¡Ganaste!", font=("Helvetica", 40, "bold"), fill="blue"
                 )
 
     def on_resize(self, event):
         """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
-        self.ventana_juego.after(1, self.visualizar_laberinto)
+        self.root.after(1, self.visualizar_laberinto)
 
     def iniciar_partida(self):
         """Inicia la partida, permitiendo el movimiento del tótem."""
         self.guardar_configuraciones()
-        self.canvas_laberinto.delete("all")
+        self.maze_canvas.delete("all")
         self.visualizar_laberinto()
         self.draw_totem(self.current_position)
         print("Partida iniciada. Usa las flechas para moverte.")
@@ -372,5 +360,5 @@ class partida:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = partida(root)
+    app = juego_laberinto(root)
     root.mainloop()
