@@ -6,6 +6,13 @@ from tkinter import ttk
 configuraciones_de_juego = {"tipo_partida":None, "tiempo":None, "dificultad":None, "dimensiones":None}
 ranking_en_memoria = []
 laberinto_en_memoria = []
+matriz_canvas = []
+
+# OBJETOS / CLASES ________________________________________________________________________________________________________________________
+class bloque:
+    def __init__(self, celda):
+        pass
+
 
 # FUNCIONES _______________________________________________________________________________________________________________________________
 # CARGAR LABERINTO ------------------------------------------------------------------------------------------------------------------------
@@ -140,8 +147,8 @@ def visualizar_laberinto(matriz):
     # Calcula el tamaño de celda para que encaje
     tamaño_celda = min(ancho_cuadro // columnas, alto_cuadro // filas)
     # crear canvas con el tamaño del laberinto, centrado en el cuadro de juego 2
-    canvas = tk.Canvas(cuadro_juego2, width=columnas * tamaño_celda, height=filas * tamaño_celda, bg="lightgray", highlightthickness=0)
-    canvas.grid(row=0, column=0, sticky='nsew')
+    celda = tk.Canvas(cuadro_juego2, width=columnas * tamaño_celda, height=filas * tamaño_celda, bg="lightgray", highlightthickness=0)
+    celda.grid(row=0, column=0, sticky='nsew')
     # Coordenadas de inicio para centrar el canvas en el cuadro de juego 2
     offset_x = (ancho_cuadro - columnas * tamaño_celda) / 2
     offset_y = (alto_cuadro - filas * tamaño_celda) / 2
@@ -160,7 +167,8 @@ def visualizar_laberinto(matriz):
             elif matriz[r][c] == 2:
                 color = "yellow" # Final
             
-            canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
+            celda.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
+            print(celda.winfo_id())
             
     # Usa `update_idletasks` para forzar el redibujado
     ventana_principal.update_idletasks()
@@ -326,6 +334,6 @@ ranking.column("Pasos", width=60, anchor=tk.W)
 
 dimensiones_dinamicas(None)
 guardar_configuraciones()
-visualizar_laberinto(laberinto_en_memoria)
+# visualizar_laberinto(laberinto_en_memoria)
 ranking_en_memoria = cargar_rankings("archivos/rankings.txt")
 ventana_principal.mainloop()
