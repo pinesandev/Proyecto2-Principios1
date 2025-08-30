@@ -6,7 +6,7 @@ from tkinter import ttk
 # CLASE BLOQUE-----------------------------------------------------------------------------------------------------------------------------
 class bloque:
     def __init__(self, cuadro_2_canvas, cuadro_bloque, fila, columna, valor_bloque):
-        self.cuadro_2_canvas = cuadro_2_canvas # cuadro de juego conteniendo todos los bloques; tipo canvaws de tkinter
+        self.cuadro_2_canvas = cuadro_2_canvas # cuadro de juego conteniendo todos los bloques; tipo canvas de tkinter
         self.cuadro_bloque = cuadro_bloque # informacion sobre el cuadro de bloque que se crea para cada celda del laberinto
         self.fila = fila
         self.columna = columna
@@ -14,9 +14,17 @@ class bloque:
         self.visitado = False # para modificar el bloque al ser visitado durante el juego
 
     # *** FUNCIONES DE CLASE ***
+    # SET COLOR ---------------------------------------------------------------------------------------------------------------------------
+    # E: tiene como entrada el valor del color que se va a establecer o cambiar en el bloque
+    # S: no tiene salidas; la funcion se encarga de cambiar el color del bloque
+    # R: el color tiene que ser de tipo string y un color valido para tkinter e .itemconfigure()
     def set_color(self, color): # metodo para cambiar el valor y color del widget
         self.cuadro_2_canvas.itemconfigure(self.cuadro_bloque, fill=color)
 
+    # GET COLOR ---------------------------------------------------------------------------------------------------------------------------
+    # E: no tiene entradas
+    # S: retorna el color que debe tener el bloque en base a su valor (-1, 0, 1, 2)
+    # R: no tiene restricciones
     def get_color(self): # metodo para obtener el color del
         if self.valor_bloque== 1:
             return "brown"  # Pared
@@ -144,9 +152,8 @@ class partida:
         self.ventana_root.bind("<Configure>", self.on_resize)
         self.ventana_root.bind("<Key>", self.handle_key_press) ### VALIDAR PARA ACEPTAR INPUTS UNICAMENTE CUANDO SE INICIA LA PARTIDA
 
-
-    # FUNCIONES DE CLASE
-    # CARGAR LABERINTO ------------------------------------------------------------------------------------------------------------------------
+    # *** FUNCIONES DE CLASE ***
+    # CARGAR LABERINTO --------------------------------------------------------------------------------------------------------------------
     # E: Ruta al archivo de texto que contiene el laberinto seleccionada por el usuario en el UI
     # S: Devuelve una matriz que representa el laberinto seleccionado
     # R: El archivo debe existir
@@ -165,7 +172,7 @@ class partida:
                 return None
             return laberinto
 
-    # CARGAR RANKING --------------------------------------------------------------------------------------------------------------------------
+    # CARGAR RANKING ----------------------------------------------------------------------------------------------------------------------
     # E: Ruta al archivo de texto que contiene el ranking guardado
     # S: Devuelve una matriz que representa el ranking
     # R: El archivo debe existir
@@ -184,7 +191,7 @@ class partida:
                 return []
             return lista_ranking
 
-    # MOSTRAR RANKING --------------------------------------------------------------------------------------------------------------------------
+    # MOSTRAR RANKING ---------------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas
     # S: la funcion se encarga de limpiar los valores en el treeview donde se muestra el raking y cargarlos nuevamente
     # R: TBD
@@ -195,7 +202,7 @@ class partida:
             for fila in self.ranking_en_memoria: # cargar datos nuevamente en el widget 'ranking_treeview'
                 self.ranking_treeview.insert("", "end", values=fila)
 
-    # GUARDAR CONFIGURACIONES -----------------------------------------------------------------------------------------------------------------
+    # GUARDAR CONFIGURACIONES -------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas; la funcion se encarga de guardar las selecciones del usuario en la variable global 'configuraciones_de_juego'
     # S: no tiene salidas; el resultado de invocar la funcion es modificar la variable global donde se guardan las configuraciones de juego antes de comenzar
     # R: TBD
@@ -268,37 +275,39 @@ class partida:
         ancho_cuadro = self.canvas_laberinto.winfo_width() # guarda el ancho actual de la ventana para calcular el tamaño de los bloques
         alto_cuadro = self.canvas_laberinto.winfo_height() # guarda el alto actual de la ventana para calcular el tamaño de los bloques
 
+        # QUITAR PARA LA VERSION FINAL
         # if ancho_cuadro <= 1 or alto_cuadro <= 1:
         #     self.canvas_laberinto.after(10, self.visualizar_laberinto)
         #     return
 
         filas = len(self.laberinto_en_memoria)
-        columnas = len(self.laberinto_en_memoria[0])
+        columnas = len(self.laberinto_en_memoria[0]) # se carga la cantidad de columnas asumiendo que el laberinto fue validado
         tamaño_celda = min(ancho_cuadro // columnas, alto_cuadro // filas) # calculo para obtener el tamanho de celda para mostrar el laberinto en base al tamanho de la pantalla
 
-        for r in range(filas):
-            row_of_bloques = []
-            for c in range(columnas):
-                x1 = c * tamaño_celda
-                y1 = r * tamaño_celda
-                x2 = x1 + tamaño_celda
+        for fila in range(filas):
+            fila_de_bloques = [] # lista vacia para guardar todos los bloques de la fila a guardar
+            for columna in range(columnas):
+                x1 = columna * tamaño_celda #coordenadas de inicio del bloque en pantalla
+                y1 = fila * tamaño_celda
+                x2 = x1 + tamaño_celda # coordenadas de final del bloque en pantalla
                 y2 = y1 + tamaño_celda
                 
-                maze_value = self.laberinto_en_memoria[r][c]
+                valor_en_laberinto = self.laberinto_en_memoria[fila][columna] # carga el valor que va a tener el bloque (-1, 0, 1, 2)
                 
-                rect_id = self.canvas_laberinto.create_rectangle(x1, y1, x2, y2, outline="gray")
+                rectangulo_id = self.canvas_laberinto.create_rectangle(x1, y1, x2, y2, outline="gray") # guarda el id de cada rectangulo creado en el canvas principal donde se va a posicionar el nuevo bloque a crear
                 
-                new_bloque = bloque(self.canvas_laberinto, rect_id, r, c, maze_value)
-                new_bloque.set_color(new_bloque.get_color())
+                nuevo_bloque = bloque(self.canvas_laberinto, rectangulo_id, fila, columna, valor_en_laberinto)
+                nuevo_bloque.set_color(nuevo_bloque.get_color())
 
-                row_of_bloques.append(new_bloque)
+                fila_de_bloques.append(nuevo_bloque) # se agrega el bloque creado a la fila de bloques que se guardara en la matriz de bloques
                 
-                if maze_value == -1:
-                    self.posicion_actual_totem = (r, c)
+                if valor_en_laberinto == -1: # en el momento que se encuentre el punto de inicio, se guarda en la partida para la posicion inicial del totem
+                    self.posicion_actual_totem = (fila, columna)
 
-            self.bloque_matriz.append(row_of_bloques)
+            self.bloque_matriz.append(fila_de_bloques) # se agrega la fila de bloques a la matriz de bloques
             
-        self.draw_totem(self.posicion_actual_totem)
+        # ESTO SE DEBE MOVER A LA FUNCION DONDE SE INICIA EL JUEGO
+        # self.draw_totem(self.posicion_actual_totem)
 
     def draw_totem(self, position):
         """Dibuja el tótem (un pequeño círculo) en un bloque dado."""
