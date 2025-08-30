@@ -2,6 +2,34 @@
 import tkinter as tk
 from tkinter import ttk
 
+# CLASSES _________________________________________________________________________________________________________________________________
+# BLOQUE
+class bloque:
+    def __init__(self, cuadro_2_canvas, cuadro_bloque, fila, columna, valor_bloque):
+        self.cuadro_2_canvas = cuadro_2_canvas # cuadro de juego conteniendo todos los bloques; tipo canvaws de tkinter
+        self.cuadro_bloque = cuadro_bloque # informacion sobre el cuadro de bloque que se crea para cada celda del laberinto
+        self.fila = fila
+        self.columna = columna
+        self.valor_bloque = valor_bloque  # -1: inicio, 0: camino abierto, 1: pared, 2: meta
+        self.visitado = False # para modificar el bloque al ser visitado durante el juego
+
+    def set_color(self, color, valor): # metodo para cambiar el valor y color del widget
+        self.cuadro_2_canvas.itemconfigure(self.cuadro_bloque, fill=color)
+
+    def get_color(self): # metodo para obtener el color del
+        if self.value == 1:
+            return "brown"  # Pared
+        elif self.value == 2:
+            return "yellow" # Final
+        elif self.value == -1:
+            return "green"  # Inicio
+        else:
+            return "white" # Camino
+    
+
+
+
+#######
 # VARIABLES GLOBALES ______________________________________________________________________________________________________________________
 configuraciones_de_juego = {"tipo_partida":None, "tiempo":None, "dificultad":None, "dimensiones":None}
 ranking_en_memoria = []
@@ -271,7 +299,7 @@ boton_auto_completar.grid(column=3, row=2, sticky='nsew')
 # un cuadro para contener el laberinto
 cuadro_juego2 = ttk.Frame(container_juego, relief="sunken")
 cuadro_juego2.grid(column=0, row=1, sticky='nsew')
-cuadro_juego2.columnconfigure(0, weight=1) # Configure for internal widgets
+cuadro_juego2.columnconfigure(0, weight=1) 
 
 # CUADRO | MENU DE JUEGO ------------------------------------------------------------------------------------------------------------------
 cuadro_menu = ttk.Frame(ventana_principal, padding=15, relief="raised")

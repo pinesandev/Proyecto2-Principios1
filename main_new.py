@@ -3,14 +3,13 @@ from tkinter import ttk
 from random import shuffle
 
 # CLASES __________________________________________________________________________________________________________________________________
-class Block:
-    """Clase para representar un bloque individual en el laberinto."""
-    def __init__(self, canvas_widget, rect_id, row, col, value):
+class bloque:
+    def __init__(self, canvas_widget, rect_id, fila, columna, valor_bloque): # clase para instanciar un bloque individual en el laberinto; cuadro juego 2
         self.canvas_widget = canvas_widget
         self.rect_id = rect_id
-        self.row = row
-        self.col = col
-        self.value = value  # -1: start, 0: path, 1: wall, 2: end
+        self.row = fila
+        self.col = columna
+        self.value = valor_bloque  # -1: inicio, 0: camino abierto, 1: pared, 2: meta
         self.is_visited = False
 
     def set_color(self, color):
@@ -28,7 +27,7 @@ class Block:
         else:
             return "white" # Camino
 
-class MazeGame:
+class juego_laberinto:
     def __init__(self, root):
         self.root = root
         self.root.title("Laberinto")
@@ -39,7 +38,7 @@ class MazeGame:
         self.configuraciones_de_juego = {"tipo_partida": "Normal", "tiempo": None, "dificultad": "Fácil", "dimensiones": "8x8"}
         self.ranking_en_memoria = []
         self.laberinto_en_memoria = []
-        self.block_matrix = []
+        self.bloque_matrix = []
         self.current_position = None
         self.totem_id = None
         
@@ -93,7 +92,7 @@ class MazeGame:
         self.cuadro_juego2.rowconfigure(0, weight=1)
 
         self.maze_canvas = tk.Canvas(self.cuadro_juego2, bg="lightgray", highlightthickness=0)
-        self.maze_canvas.pack(fill="both", expand=True)
+        self.maze_canvas.pack()
 
         # CUADRO | MENU DE JUEGO
         self.cuadro_menu = ttk.Frame(root, padding=15, relief="raised")
@@ -238,7 +237,7 @@ class MazeGame:
             return
 
         self.maze_canvas.delete("all")
-        self.block_matrix.clear()
+        self.bloque_matrix.clear()
 
         ancho_cuadro = self.maze_canvas.winfo_width()
         alto_cuadro = self.maze_canvas.winfo_height()
@@ -252,7 +251,7 @@ class MazeGame:
         tamaño_celda = min(ancho_cuadro // columnas, alto_cuadro // filas)
 
         for r in range(filas):
-            row_of_blocks = []
+            row_of_bloques = []
             for c in range(columnas):
                 x1 = c * tamaño_celda
                 y1 = r * tamaño_celda
@@ -263,15 +262,15 @@ class MazeGame:
                 
                 rect_id = self.maze_canvas.create_rectangle(x1, y1, x2, y2, outline="gray")
                 
-                new_block = Block(self.maze_canvas, rect_id, r, c, maze_value)
-                new_block.set_color(new_block.get_color())
+                new_bloque = bloque(self.maze_canvas, rect_id, r, c, maze_value)
+                new_bloque.set_color(new_bloque.get_color())
 
-                row_of_blocks.append(new_block)
+                row_of_bloques.append(new_bloque)
                 
                 if maze_value == -1:
                     self.current_position = (r, c)
 
-            self.block_matrix.append(row_of_blocks)
+            self.bloque_matrix.append(row_of_bloques)
             
         self.draw_totem(self.current_position)
 
@@ -316,10 +315,10 @@ class MazeGame:
             0 <= new_c < len(self.laberinto_en_memoria[0]) and
             self.laberinto_en_memoria[new_r][new_c] != 1):
             
-            old_block = self.block_matrix[r][c]
-            if old_block.value == 0 and not old_block.is_visited:
-                old_block.set_color("lightblue")
-                old_block.is_visited = True
+            old_bloque = self.bloque_matrix[r][c]
+            if old_bloque.value == 0 and not old_bloque.is_visited:
+                old_bloque.set_color("lightblue")
+                old_bloque.is_visited = True
                 
             self.current_position = (new_r, new_c)
             self.draw_totem(self.current_position)
@@ -334,7 +333,7 @@ class MazeGame:
 
     def on_resize(self, event):
         """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
-        self.root.after(10, self.visualizar_laberinto)
+        self.root.after(1, self.visualizar_laberinto)
 
     def iniciar_partida(self):
         """Inicia la partida, permitiendo el movimiento del tótem."""
@@ -360,5 +359,5 @@ class MazeGame:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = MazeGame(root)
+    app = juego_laberinto(root)
     root.mainloop()
