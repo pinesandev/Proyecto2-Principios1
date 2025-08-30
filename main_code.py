@@ -32,53 +32,56 @@ class bloque:
 class partida:
     def __init__(self, ventana_root):
         self.ventana_root = ventana_root
-        # configuracion de la ventana
+
+        # configuraciones de la ventana principal
         self.ventana_root.title("Laberinto")
         self.ventana_root.geometry("1050x850")
-        # self.ventana_root.resizeable(False, False)
+        # self.ventana_root.resizable(False, False)
         self.ventana_root.columnconfigure(0, weight=3, minsize=250)
         self.ventana_root.columnconfigure(1, weight=7)
         self.ventana_root.rowconfigure(0, weight=1)
+
         # configuraciones y variables de juego
         self.configuraciones_de_juego = {"tipo_partida": "Normal", "tiempo": None, "dificultad": "Fácil", "dimensiones": "8x8"}
         self.ranking_en_memoria = []
         self.laberinto_en_memoria = []
-        self.bloque_matriz = []
-        self.posicion_actual_totem = None
-        self.totem_d = None
+        self.bloque_matriz = [] # guardar una matriz de todos los objetos tipo bloque se que crean para cada laberinto
+        self.posicion_actual_totem = None # almacena la posicion del totem en el laberinto
+        self.totem_id = None # almacena el totem de tipo canvas creado para visualizar donde esta el usuario en el laberinto
         self.modo_seleccionado = tk.StringVar(value=self.configuraciones_de_juego["tipo_partida"])
         self.dificultad_seleccionada = tk.StringVar(value=self.configuraciones_de_juego["dificultad"])
         self.dimensiones_seleccionadas = tk.StringVar(value=self.configuraciones_de_juego["dimensiones"])
         self.contador_tiempo = tk.IntVar()
-        # estilo para los botones
+
+        # estilo customizado para los botones
         self.estilo_default_botones = ttk.Style()
         self.estilo_default_botones.configure('estilo_custom.TButton', font=('Courier', 14, 'bold'))
         
-        # cuadro ventana de juego
+        # *** CUADRO VENTANA DE JUEGO *** cuadro donde se van a contener ambos areas de juego
         self.ventana_juego = ttk.Frame(ventana_root)
         self.ventana_juego.grid(row=0, column=1, sticky='nsew')
         self.ventana_juego.columnconfigure(0, weight=1)
         self.ventana_juego.rowconfigure(0, weight=0)
         self.ventana_juego.rowconfigure(1, weight=1)
 
-        # cuadro area de juego 1
+        # *** CUADRO AREA DE JUEGO 1 ***
         self.cuadro_juego1 = ttk.Frame(self.ventana_juego, padding=15)
         self.cuadro_juego1.grid(row=0, column=0, sticky='nsew')
         self.cuadro_juego1.columnconfigure((0, 1, 2, 3), weight=1)
         
-        # widgets para area de juego 1 de cada partida
-        ttk.Label(self.cuadro_juego1, text="Modo:", font=("Courier", 16, "bold")).grid(column=0, row=0, sticky='w')
-        ttk.Label(self.cuadro_juego1, textvariable=self.modo_seleccionado, font=("Courier", 14,)).grid(column=1, row=0, sticky='w')
-        
-        ttk.Label(self.cuadro_juego1, text="Dificultad:", font=("Courier", 16, "bold")).grid(column=0, row=1, sticky='w')
-        ttk.Label(self.cuadro_juego1, textvariable=self.dificultad_seleccionada, font=("Courier", 14,)).grid(column=1, row=1, sticky='w')
+        # *** WIDGETS | CUADRO AREA DE JUEGO 1 ***
+        # las etiquetas estaticas se presentan en "bold" en el area de juego 1
+        # las etiquetas mutables cambian en base a la seleccion de configuraciones en el menu del usuario cuando se guardan las configuraciones
+        ttk.Label(self.cuadro_juego1, text="Modo:", font=("Courier", 16, "bold")).grid(column=0, row=0, sticky='w') # etiqueta estatica de modo
+        ttk.Label(self.cuadro_juego1, textvariable=self.modo_seleccionado, font=("Courier", 14,)).grid(column=1, row=0, sticky='w') # etiqueta mutable de modo
+        ttk.Label(self.cuadro_juego1, text="Dificultad:", font=("Courier", 16, "bold")).grid(column=0, row=1, sticky='w') # etiqueta estatica de dificultad
+        ttk.Label(self.cuadro_juego1, textvariable=self.dificultad_seleccionada, font=("Courier", 14,)).grid(column=1, row=1, sticky='w') # etiqueta mutable de dificultad
+        ttk.Label(self.cuadro_juego1, text="Dimensiones:", font=("Courier", 16, "bold")).grid(column=2, row=0, sticky='w') # etiqueta estatica de dimensiones
+        ttk.Label(self.cuadro_juego1, textvariable=self.dimensiones_seleccionadas, font=("Courier", 14,)).grid(column=3, row=0, sticky='w') # etiqueta mutable de dimeniones
+        ttk.Label(self.cuadro_juego1, text="Tiempo:", font=("Courier", 16, "bold")).grid(column=2, row=1, sticky='w') # etiqueta estatica de tiempo
+        ttk.Label(self.cuadro_juego1, textvariable=self.contador_tiempo, font=("Courier", 14,)).grid(column=3, row=1, sticky='w') # etiqueta mutable de tiempo
 
-        ttk.Label(self.cuadro_juego1, text="Dimensiones:", font=("Courier", 16, "bold")).grid(column=2, row=0, sticky='w')
-        ttk.Label(self.cuadro_juego1, textvariable=self.dimensiones_seleccionadas, font=("Courier", 14,)).grid(column=3, row=0, sticky='w')
-
-        ttk.Label(self.cuadro_juego1, text="Tiempo:", font=("Courier", 16, "bold")).grid(column=2, row=1, sticky='w')
-        ttk.Label(self.cuadro_juego1, textvariable=self.contador_tiempo, font=("Courier", 14,)).grid(column=3, row=1, sticky='w')
-
+        # botones del area de juego 1 para controlar el funcionamiento de la patida
         ttk.Button(self.cuadro_juego1, text="Iniciar", command=self.iniciar_partida, style='estilo_custom.TButton').grid(column=0, row=2, sticky='nsew')
         ttk.Button(self.cuadro_juego1, text="Reiniciar", command=self.reiniciar_partida, style='estilo_custom.TButton').grid(column=1, row=2, sticky='nsew')
         ttk.Button(self.cuadro_juego1, text="Auto completar", command=self.autocompletar_laberinto, style='estilo_custom.TButton').grid(column=2, row=2, sticky='nsew')
@@ -98,32 +101,26 @@ class partida:
         self.cuadro_menu.grid(row=0, column=0, sticky='nsew')
         self.cuadro_menu.columnconfigure(0, weight=1)
 
-        # widgets para cuadro menu
+        # *** WIDGETS | CUADRO MENU *** 
         ttk.Label(self.cuadro_menu, text="Menu", font=("Courier", 20, "bold")).grid(row=0, column=0, pady=(0, 15))
-        
         ttk.Label(self.cuadro_menu, text="Modo de Juego", font=("Courier", 14, "bold", "italic")).grid(row=1, column=0, sticky='w')
         self.combo_partida = ttk.Combobox(self.cuadro_menu, values=["Normal", "Contra Tiempo"])
         self.combo_partida.grid(row=2, column=0, sticky='nsew', pady=(0, 5))
         self.combo_partida.set("Normal")
         self.combo_partida.bind("<<ComboboxSelected>>", self.tiempo_partida_dinamico)
-
         self.etiqueta_tiempo = ttk.Label(self.cuadro_menu, text="Minutos de Juego", font=("Courier", 14, "bold", "italic"))
         self.combo_tiempo = ttk.Combobox(self.cuadro_menu, values=[2,5,7])
-
         ttk.Label(self.cuadro_menu, text="Dificultad", font=("Courier", 14, "bold", "italic")).grid(row=5, column=0, sticky='w')
         self.combo_dificultad = ttk.Combobox(self.cuadro_menu, values=["Fácil", "Medio", "Difícil"])
         self.combo_dificultad.grid(row=6, column=0, sticky='nsew', pady=(0, 5))
         self.combo_dificultad.set("Fácil")
         self.combo_dificultad.bind("<<ComboboxSelected>>", self.dimensiones_dinamicas)
-        
         ttk.Label(self.cuadro_menu, text="Dimensiones", font=("Courier", 14, "bold", "italic")).grid(row=7, column=0, sticky='w', pady=(0, 0))
         self.combo_dimensiones = ttk.Combobox(self.cuadro_menu)
         self.combo_dimensiones.grid(row=8, column=0, sticky='nsew', pady=(0, 5))
-
         ttk.Button(self.cuadro_menu, text="Guardar Configuracion", command=self.guardar_configuraciones, style='estilo_custom.TButton').grid(row=9, column=0, sticky='nsew', pady=(10, 10))
-        
-        ttk.Label(self.cuadro_menu, text="Ranking", font=("Courier", 20, "bold")).grid(row=10, column=0, pady=(25, 5))
-        
+        # porcion del menu para mostrar el ranking
+        ttk.Label(self.cuadro_menu, text="Ranking", font=("Courier", 20, "bold")).grid(row=10, column=0, pady=(25, 5))        
         self.ranking_treeview = ttk.Treeview(self.cuadro_menu, columns=("Tiempo", "Nombre", "Tamaño", "Pasos"), show="headings")
         self.ranking_treeview.grid(row=11, column=0, pady=(0, 5), sticky='nsew')
         self.ranking_treeview.heading("Tiempo", text="Tiempo", anchor=tk.W)
@@ -136,14 +133,16 @@ class partida:
         self.ranking_treeview.column("Pasos", width=60, anchor=tk.W)
 
         # *** CARGAR DATOS INICIALES DE PARTIDA ***
-        self.dimensiones_dinamicas(None)
-        self.guardar_configuraciones()
-        self.ranking_en_memoria = self.cargar_rankings("archivos/rankings.txt")
-        self.mostrar_ranking()
+        # se inicia el juego con datos por defecto; en este caso una aprtida de tipo normal con dimensiones 8x8
+        self.dimensiones_dinamicas(None) # dimensiones dinamicas toma un evento como parametro; en este caso un cambio en el combobox de dificultad de partida
+        self.guardar_configuraciones() # se cargan las confoguraciones en base a los valores por defecto de todos los comboboxes en el menu
+        self.ranking_en_memoria = self.cargar_rankings("archivos/rankings.txt") # se cargan los rankings
+        self.mostrar_ranking() # se carga el rakning en el treeview
 
         # *** VICULAR EVENTOS ***
+        # se vinculan eventos como cambiar el tamaño de la pantalla y inputs del teclado con su respectiva funcion
         self.ventana_root.bind("<Configure>", self.on_resize)
-        self.ventana_root.bind("<Key>", self.handle_key_press)
+        self.ventana_root.bind("<Key>", self.handle_key_press) ### VALIDAR PARA ACEPTAR INPUTS UNICAMENTE CUANDO SE INICIA LA PARTIDA
 
 
     # FUNCIONES DE CLASE
@@ -186,14 +185,14 @@ class partida:
             return lista_ranking
 
     # MOSTRAR RANKING --------------------------------------------------------------------------------------------------------------------------
-    # E:  
-    # S: 
-    # R: 
+    # E: no tiene entradas
+    # S: la funcion se encarga de limpiar los valores en el treeview donde se muestra el raking y cargarlos nuevamente
+    # R: TBD
     def mostrar_ranking(self):
             for item in self.ranking_treeview.get_children(): # ciclo para limpiar el widget 'ranking_treeview'
                 self.ranking_treeview.delete(item)
             
-            for fila in self.ranking_en_memoria: # cargar datos nuevamente
+            for fila in self.ranking_en_memoria: # cargar datos nuevamente en el widget 'ranking_treeview'
                 self.ranking_treeview.insert("", "end", values=fila)
 
     # GUARDAR CONFIGURACIONES -----------------------------------------------------------------------------------------------------------------
@@ -201,18 +200,20 @@ class partida:
     # S: no tiene salidas; el resultado de invocar la funcion es modificar la variable global donde se guardan las configuraciones de juego antes de comenzar
     # R: TBD
     def guardar_configuraciones(self):
+        # guardar las configuraciones de juego seleccionadas en el menu dentro de un diccionario en el objeto tipo partida (configuraciones_de_juego)
         self.configuraciones_de_juego["tipo_partida"] = self.combo_partida.get()
         if self.combo_partida.get() == "Contra Tiempo":
             self.configuraciones_de_juego["tiempo"] = self.combo_tiempo.get()
         self.configuraciones_de_juego["dificultad"] = self.combo_dificultad.get()
         self.configuraciones_de_juego["dimensiones"] = self.combo_dimensiones.get()
-        
-        print("Las siguientes configuraciones fueron cargadas:")
+        print("Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
         print(self.configuraciones_de_juego)
         
+        # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
         ruta_laberinto = f"archivos/laberintos/{self.configuraciones_de_juego['dificultad']}/{self.configuraciones_de_juego['dimensiones']}.txt"
         self.laberinto_en_memoria = self.cargar_laberinto(ruta_laberinto)
         
+        # actualizar las variables que controlan el contenido de las etiquetas mutables del area de juego 1
         self.modo_seleccionado.set(self.configuraciones_de_juego["tipo_partida"])
         self.dificultad_seleccionada.set(self.configuraciones_de_juego["dificultad"])
         self.dimensiones_seleccionadas.set(self.configuraciones_de_juego["dimensiones"])
@@ -221,6 +222,10 @@ class partida:
         self.visualizar_laberinto()
         print("Laberinto cargado en la ventana.")
 
+    # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
+    # E: el parametro de entrada es un evento que sucede al cambiar la seleccion de dificultad en el combobox del menu
+    # S: no tiene salidas; la funcion se encarga de cambiar los valores disponibles en el combobox de dimeniones en base a la dificultad seleccionada
+    # R: TBD
     def dimensiones_dinamicas(self, evento):
         dificultad_seleccionada = self.combo_dificultad.get()
         if dificultad_seleccionada == "Fácil":
@@ -234,6 +239,10 @@ class partida:
         self.combo_dimensiones["values"] = dimension_opciones
         self.combo_dimensiones.set(dimension_opciones[0])
 
+    # TIEMPO PARTIDA DINAMICO -------------------------------------------------------------------------------------------------------------
+    # E: el paramtro de entrada es un evento que sucede al cambiar la seleccion del modo de juego en el combobox del menu
+    # S: no tiene salida; la funcion se encarga de mostrar o esconder la etiqueta y combobox de seleccion de minutos de partida
+    # R: TBD
     def tiempo_partida_dinamico(self, evento):
         selected_type = self.combo_partida.get()
         if selected_type == "Contra Tiempo":
@@ -244,24 +253,28 @@ class partida:
             self.etiqueta_tiempo.grid_forget()
             self.combo_tiempo.grid_forget()
 
+    # VISUALIZAR LABERINTO ----------------------------------------------------------------------------------------------------------------
+    # E: no tiene parametros de entrada
+    # S: la funcion se encarga de mostrar en pantalla el laberinto cargado en memoria creando objetos 'bloque'
+    # R: 
     def visualizar_laberinto(self):
         if not self.laberinto_en_memoria:
             print("No hay laberinto cargado para visualizar.")
             return
 
-        self.canvas_laberinto.delete("all")
-        self.bloque_matriz.clear()
+        self.canvas_laberinto.delete("all") # limpia el canvas que contiene los bloques del laberinto antes de crear y mostrar nuevos bloques
+        self.bloque_matriz.clear() # limpia la matriz donde se almacenan los bloques del laberinto
 
-        ancho_cuadro = self.canvas_laberinto.winfo_width()
-        alto_cuadro = self.canvas_laberinto.winfo_height()
+        ancho_cuadro = self.canvas_laberinto.winfo_width() # guarda el ancho actual de la ventana para calcular el tamaño de los bloques
+        alto_cuadro = self.canvas_laberinto.winfo_height() # guarda el alto actual de la ventana para calcular el tamaño de los bloques
 
-        if ancho_cuadro <= 1 or alto_cuadro <= 1:
-            self.canvas_laberinto.after(10, self.visualizar_laberinto)
-            return
+        # if ancho_cuadro <= 1 or alto_cuadro <= 1:
+        #     self.canvas_laberinto.after(10, self.visualizar_laberinto)
+        #     return
 
         filas = len(self.laberinto_en_memoria)
         columnas = len(self.laberinto_en_memoria[0])
-        tamaño_celda = min(ancho_cuadro // columnas, alto_cuadro // filas)
+        tamaño_celda = min(ancho_cuadro // columnas, alto_cuadro // filas) # calculo para obtener el tamanho de celda para mostrar el laberinto en base al tamanho de la pantalla
 
         for r in range(filas):
             row_of_bloques = []
@@ -281,11 +294,11 @@ class partida:
                 row_of_bloques.append(new_bloque)
                 
                 if maze_value == -1:
-                    self.current_position = (r, c)
+                    self.posicion_actual_totem = (r, c)
 
             self.bloque_matriz.append(row_of_bloques)
             
-        self.draw_totem(self.current_position)
+        self.draw_totem(self.posicion_actual_totem)
 
     def draw_totem(self, position):
         """Dibuja el tótem (un pequeño círculo) en un bloque dado."""
@@ -309,10 +322,10 @@ class partida:
 
     def handle_key_press(self, event):
         """Maneja las pulsaciones de tecla para mover el tótem."""
-        if self.current_position is None:
+        if self.posicion_actual_totem is None:
             return
 
-        r, c = self.current_position
+        r, c = self.posicion_actual_totem
         new_r, new_c = r, c
         
         if event.keysym == "Up":
@@ -333,8 +346,8 @@ class partida:
                 old_bloque.set_color("lightblue")
                 old_bloque.visitado = True
                 
-            self.current_position = (new_r, new_c)
-            self.draw_totem(self.current_position)
+            self.posicion_actual_totem = (new_r, new_c)
+            self.draw_totem(self.posicion_actual_totem)
             
             if self.laberinto_en_memoria[new_r][new_c] == 2:
                 print("¡Has llegado al final!")
@@ -344,7 +357,7 @@ class partida:
                     text="¡Ganaste!", font=("Helvetica", 40, "bold"), fill="blue"
                 )
 
-    def on_resize(self, event):
+    def on_resize(self, event): #### VALIDAR
         """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
         self.ventana_juego.after(1, self.visualizar_laberinto)
 
@@ -353,7 +366,7 @@ class partida:
         self.guardar_configuraciones()
         self.canvas_laberinto.delete("all")
         self.visualizar_laberinto()
-        self.draw_totem(self.current_position)
+        self.draw_totem(self.posicion_actual_totem)
         print("Partida iniciada. Usa las flechas para moverte.")
 
     def reiniciar_partida(self):
@@ -370,7 +383,8 @@ class partida:
         print("Partida abandonada. Volviendo al menú principal.")
         self.visualizar_laberinto()
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = partida(root)
-    root.mainloop()
+# INICIO DE PARTIDA Y VENTANA PRINCIPAL ___________________________________________________________________________________________________
+if __name__ == "__main__": # iniciar la ventana unicamente si el archvo se esta ejecutando directamente 
+    ventana = tk.Tk() # se crea una instancia de una ventana .Tk()
+    juego = partida(ventana) # se envia la ventana como parametro para la variable "ventana_root" del objeto tipo partida
+    ventana.mainloop() # genera la ventana principal
