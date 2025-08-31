@@ -1,9 +1,44 @@
 # IMPORTS / LIBRARIES
 import tkinter as tk
 from tkinter import ttk
+import time # utilizado para utilizar la funcion sleep()
+from datetime import datetime # para manejar todos los tiempos del programa
+import threading # para crear un proceso / thread  para el cronometro
 
 # CLASSES _________________________________________________________________________________________________________________________________
-# CLASE BLOQUE-----------------------------------------------------------------------------------------------------------------------------
+# CRONOMETRO ------------------------------------------------------------------------------------------------------------------------------
+class cronometro:
+    def __init__(self, tipo_crono):
+        self.segundos_totales = 0
+        self.tipo_crono = tipo_crono
+        self.corriendo = False # almacena el estado del cronometro para controlar los procesos
+        self.proceso = None # se guarda el proceso / thread que comienza al inicializar el cronometro
+
+    # *** FUNCIONES DE CLASE ***
+    def iniciar(self):
+        # validar que el cronometro no esta corriendo; corriendo == False
+        if self.corriendo == False:
+            print("********")
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO: cronometro inicializado")
+            self.corriendo = True
+            self.tiempo_inicio = datetime.now()
+            self.proceso = threading.Thread(target=self.runtime, daemon=True)
+            self.proceso.start()
+    
+    def runtime(self):
+        print("########")
+        while self.corriendo == True:
+            self.segundos_totales += 1
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {self.segundos_totales} s")
+            time.sleep(1)
+
+    def detener(self):
+        self.corriendo = False
+        self.proceso.join() # espera la finalizacion del proceso
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO: cronometro detenido")
+
+            
+# CLASE BLOQUE ----------------------------------------------------------------------------------------------------------------------------
 class bloque:
     def __init__(self, cuadro_2_canvas, cuadro_bloque, fila, columna, valor_bloque):
         self.cuadro_2_canvas = cuadro_2_canvas # cuadro de juego conteniendo todos los bloques; tipo canvas de tkinter
@@ -33,33 +68,34 @@ class bloque:
         elif self.valor_bloque == -1:
             return "green"  # Inicio
         else:
-            return "white" # Camino
-        
+            return "white" # Camino   
 
-# CLASE PARTIDA----------------------------------------------------------------------------------------------------------------------------
+# CLASE PARTIDA ---------------------------------------------------------------------------------------------------------------------------
 class partida:
     def __init__(self, ventana_root):
         self.ventana_root = ventana_root
 
         # configuraciones de la ventana principal
         self.ventana_root.title("Laberinto")
-        self.ventana_root.geometry("1050x850")
-        # self.ventana_root.resizable(False, False)
+        self.ventana_root.geometry("980x750")
+        self.ventana_root.resizable(False, False)
         self.ventana_root.columnconfigure(0, weight=3, minsize=250)
         self.ventana_root.columnconfigure(1, weight=7)
         self.ventana_root.rowconfigure(0, weight=1)
 
         # configuraciones y variables de juego
+        self.partida_iniciada = False
+        self.movimientos_partida = 0
         self.configuraciones_de_juego = {"tipo_partida": "Normal", "tiempo": None, "dificultad": "Fácil", "dimensiones": "8x8"}
         self.ranking_en_memoria = []
         self.laberinto_en_memoria = []
         self.bloque_matriz = [] # guardar una matriz de todos los objetos tipo bloque se que crean para cada laberinto
         self.posicion_actual_totem = None # almacena la posicion del totem en el laberinto
-        self.totem_id = None # almacena el totem de tipo canvas creado para visualizar donde esta el usuario en el laberinto
         self.modo_seleccionado = tk.StringVar(value=self.configuraciones_de_juego["tipo_partida"])
         self.dificultad_seleccionada = tk.StringVar(value=self.configuraciones_de_juego["dificultad"])
         self.dimensiones_seleccionadas = tk.StringVar(value=self.configuraciones_de_juego["dimensiones"])
         self.contador_tiempo = tk.IntVar()
+        self.instancia_cronometro = None # guarda el cronometro inicializado en la partida
 
         # estilo customizado para los botones
         self.estilo_default_botones = ttk.Style()
@@ -101,7 +137,7 @@ class partida:
         self.cuadro_juego2.columnconfigure(0, weight=1)
         self.cuadro_juego2.rowconfigure(0, weight=1)
 
-        self.canvas_laberinto = tk.Canvas(self.cuadro_juego2, bg="lightgray", highlightthickness=0)
+        self.canvas_laberinto = tk.Canvas(self.cuadro_juego2, bg="black", highlightthickness=0)
         self.canvas_laberinto.pack(fill="both", expand=True, anchor="center")
 
         # *** CUADRO MENU *** 
@@ -150,7 +186,7 @@ class partida:
         # *** VICULAR EVENTOS ***
         # se vinculan eventos como cambiar el tamaño de la pantalla y inputs del teclado con su respectiva funcion
         self.ventana_root.bind("<Configure>", self.on_resize)
-        self.ventana_root.bind("<Key>", self.handle_key_press) ### VALIDAR PARA ACEPTAR INPUTS UNICAMENTE CUANDO SE INICIA LA PARTIDA
+        self.ventana_root.bind("<Key>", self.movimiento_teclas) ### VALIDAR PARA ACEPTAR INPUTS UNICAMENTE CUANDO SE INICIA LA PARTIDA
 
     # *** FUNCIONES DE CLASE ***
     # CARGAR LABERINTO --------------------------------------------------------------------------------------------------------------------
@@ -168,7 +204,7 @@ class partida:
                         fila = [int(celda) for celda in linea.strip().split(',')]
                         laberinto.append(fila)
             except FileNotFoundError:
-                print(f"Error: Archivo no encontrado en {ruta}")
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Error: Archivo no encontrado en {ruta}")
                 return None
             return laberinto
 
@@ -187,7 +223,7 @@ class partida:
                         fila = [valor for valor in linea.split(',')]
                         lista_ranking.append(fila)
             except FileNotFoundError:
-                print(f"*** Error: Archivo de ranking no encontrado en {ruta} ***")
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} *** Error: Archivo de ranking no encontrado en {ruta} ***")
                 return []
             return lista_ranking
 
@@ -213,7 +249,7 @@ class partida:
             self.configuraciones_de_juego["tiempo"] = self.combo_tiempo.get()
         self.configuraciones_de_juego["dificultad"] = self.combo_dificultad.get()
         self.configuraciones_de_juego["dimensiones"] = self.combo_dimensiones.get()
-        print("Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
         print(self.configuraciones_de_juego)
         
         # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
@@ -224,10 +260,10 @@ class partida:
         self.modo_seleccionado.set(self.configuraciones_de_juego["tipo_partida"])
         self.dificultad_seleccionada.set(self.configuraciones_de_juego["dificultad"])
         self.dimensiones_seleccionadas.set(self.configuraciones_de_juego["dimensiones"])
-        print("Valores de área 1 modificados.")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Valores de área 1 actualizadas.")
         
         self.visualizar_laberinto()
-        print("Laberinto cargado en la ventana.")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Laberinto cargado en la ventana.")
 
     # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
     # E: el parametro de entrada es un evento que sucede al cambiar la seleccion de dificultad en el combobox del menu
@@ -259,26 +295,17 @@ class partida:
         else:
             self.etiqueta_tiempo.grid_forget()
             self.combo_tiempo.grid_forget()
-
+    
     # VISUALIZAR LABERINTO ----------------------------------------------------------------------------------------------------------------
     # E: no tiene parametros de entrada
     # S: la funcion se encarga de mostrar en pantalla el laberinto cargado en memoria creando objetos 'bloque'
     # R: 
     def visualizar_laberinto(self):
-        if not self.laberinto_en_memoria:
-            print("No hay laberinto cargado para visualizar.")
-            return
-
         self.canvas_laberinto.delete("all") # limpia el canvas que contiene los bloques del laberinto antes de crear y mostrar nuevos bloques
         self.bloque_matriz.clear() # limpia la matriz donde se almacenan los bloques del laberinto
 
         ancho_cuadro = self.canvas_laberinto.winfo_width() # guarda el ancho actual de la ventana para calcular el tamaño de los bloques
         alto_cuadro = self.canvas_laberinto.winfo_height() # guarda el alto actual de la ventana para calcular el tamaño de los bloques
-
-        # QUITAR PARA LA VERSION FINAL
-        # if ancho_cuadro <= 1 or alto_cuadro <= 1:
-        #     self.canvas_laberinto.after(10, self.visualizar_laberinto)
-        #     return
 
         filas = len(self.laberinto_en_memoria)
         columnas = len(self.laberinto_en_memoria[0]) # se carga la cantidad de columnas asumiendo que el laberinto fue validado
@@ -305,83 +332,92 @@ class partida:
                     self.posicion_actual_totem = (fila, columna)
 
             self.bloque_matriz.append(fila_de_bloques) # se agrega la fila de bloques a la matriz de bloques
-            
-        # ESTO SE DEBE MOVER A LA FUNCION DONDE SE INICIA EL JUEGO
-        # self.draw_totem(self.posicion_actual_totem)
-
-    def draw_totem(self, position):
-        """Dibuja el tótem (un pequeño círculo) en un bloque dado."""
-        self.canvas_laberinto.delete("totem")
-        r, c = position
+    
+    # MOSTRAR TOKEN -----------------------------------------------------------------------------------------------------------------------
+    # E: como parametro de entrada se recibe una tupla con los valores (fila, columna) para manejar la posicion del token
+    # S: no tiene salida; la funcion se encarga de mover el token en la pantalla; cada instancia de la funcion limpia y vuelve a mostrar el token en base a la posicion actual en la partida
+    # R: TBD
+    def mostrar_totem(self, position):
+        self.canvas_laberinto.delete("totem") # se borra el token de la posicion actual; esta funcion se llama cada movimiento que se hace en la posicion del token
+        fila, columna = position
         
-        cell_size = min(self.canvas_laberinto.winfo_width() // len(self.laberinto_en_memoria[0]), 
+        tamaño_celda = min(self.canvas_laberinto.winfo_width() // len(self.laberinto_en_memoria[0]), 
                         self.canvas_laberinto.winfo_height() // len(self.laberinto_en_memoria))
         
-        x_center = c * cell_size + cell_size / 2
-        y_center = r * cell_size + cell_size / 2
+        centro_fila = columna * tamaño_celda + tamaño_celda / 2
+        centro_columna = fila * tamaño_celda + tamaño_celda / 2
         
-        totem_size = cell_size / 3
+        tamaño_totem = tamaño_celda / 3
         
-        x1 = x_center - totem_size
-        y1 = y_center - totem_size
-        x2 = x_center + totem_size
-        y2 = y_center + totem_size
+        x1 = centro_fila - tamaño_totem
+        y1 = centro_columna - tamaño_totem
+        x2 = centro_fila + tamaño_totem
+        y2 = centro_columna + tamaño_totem
         
-        self.totem_id = self.canvas_laberinto.create_oval(x1, y1, x2, y2, fill="blue", tags="totem")
+        self.canvas_laberinto.create_oval(x1, y1, x2, y2, fill="blue", tags="totem") # vuelve a generar el totem en al pantalla con su posicion actualizada
 
-    def handle_key_press(self, event):
-        """Maneja las pulsaciones de tecla para mover el tótem."""
-        if self.posicion_actual_totem is None:
+    # MOVIMIENTO TECLAS -------------------------------------------------------------------------------------------------------------------
+    # E: el paremetro de entrada es un evento; en este caso el evento de pserionar una tecla con el enfoque en la venta de juego
+    # S: no tiene salidas; la funcion se encarga de registar los movimientos de las teclas en 
+    # R: TBD
+    def movimiento_teclas(self, event):
+        if self.partida_iniciada == False: # no actua si la partida no esta iniciada
             return
-
-        r, c = self.posicion_actual_totem
-        new_r, new_c = r, c
+        # se guardan los valores fila y columna de la posicion actual en variables separadas para manejarlos en la funcion
+        fila, columna = self.posicion_actual_totem
+        nueva_fila, nueva_columna = fila, columna
         
+        # se valida el tipo de input que se recibe del evento
         if event.keysym == "Up":
-            new_r -= 1
+            nueva_fila -= 1
         elif event.keysym == "Down":
-            new_r += 1
+            nueva_fila += 1
         elif event.keysym == "Left":
-            new_c -= 1
+            nueva_columna -= 1
         elif event.keysym == "Right":
-            new_c += 1
+            nueva_columna += 1
             
-        if (0 <= new_r < len(self.laberinto_en_memoria) and 
-            0 <= new_c < len(self.laberinto_en_memoria[0]) and
-            self.laberinto_en_memoria[new_r][new_c] != 1):
-            
-            old_bloque = self.bloque_matriz[r][c]
+        # se agrega un movimiento al contador de movimientos
+        # self.movimientos_partida += 1
+        # print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} movimiento {event.keysym} #{self.movimientos_partida}")
+
+        if (0 <= nueva_fila < len(self.laberinto_en_memoria) and 
+            0 <= nueva_columna < len(self.laberinto_en_memoria[0]) and
+            self.laberinto_en_memoria[nueva_fila][nueva_columna] != 1):
+            self.movimientos_partida += 1
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} movimiento {event.keysym} #{self.movimientos_partida}")
+            old_bloque = self.bloque_matriz[fila][columna]
             if old_bloque.valor_bloque == 0 and not old_bloque.visitado:
                 old_bloque.set_color("lightblue")
                 old_bloque.visitado = True
                 
-            self.posicion_actual_totem = (new_r, new_c)
-            self.draw_totem(self.posicion_actual_totem)
+            self.posicion_actual_totem = (nueva_fila, nueva_columna)
+            self.mostrar_totem(self.posicion_actual_totem)
             
-            if self.laberinto_en_memoria[new_r][new_c] == 2:
-                print("¡Has llegado al final!")
+            if self.laberinto_en_memoria[nueva_fila][nueva_columna] == 2:
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ¡Has llegado al final!")
                 self.canvas_laberinto.create_text(
                     self.canvas_laberinto.winfo_width() / 2,
                     self.canvas_laberinto.winfo_height() / 2,
                     text="¡Ganaste!", font=("Helvetica", 40, "bold"), fill="blue"
                 )
 
-    def on_resize(self, event): #### VALIDAR
-        """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
-        self.ventana_juego.after(1, self.visualizar_laberinto)
+    def on_resize(self, event):
+            """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
+            self.ventana_root.after(10, self.visualizar_laberinto)
 
     def iniciar_partida(self):
-        """Inicia la partida, permitiendo el movimiento del tótem."""
-        self.guardar_configuraciones()
-        self.canvas_laberinto.delete("all")
-        self.visualizar_laberinto()
-        self.draw_totem(self.posicion_actual_totem)
-        print("Partida iniciada. Usa las flechas para moverte.")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida iniciada. Usa las flechas para moverte.")
+        self.movimientos_partida = 0
+        self.partida_iniciada = True # habilita el movimiento del totem
+        self.instancia_cronometro = cronometro("Tipo")
+        self.instancia_cronometro.iniciar()
+        self.mostrar_totem(self.posicion_actual_totem) # muestra el totem en la ventana
 
     def reiniciar_partida(self):
-        """Reinicia la partida con la configuración actual."""
-        print("Reiniciando partida...")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Reiniciando partida...")
         self.visualizar_laberinto()
+        self.iniciar_partida()
 
     def autocompletar_laberinto(self):
         # Esta función requerirá un algoritmo de búsqueda de camino (e.g., A*)
@@ -389,11 +425,14 @@ class partida:
 
     def abandonar_partida(self):
         # Esta función requerirá guardar el estado y/o volver al menú principal
-        print("Partida abandonada. Volviendo al menú principal.")
+        self.partida_iniciada = False
+        self.instancia_cronometro.detener()
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
         self.visualizar_laberinto()
 
 # INICIO DE PARTIDA Y VENTANA PRINCIPAL ___________________________________________________________________________________________________
 if __name__ == "__main__": # iniciar la ventana unicamente si el archvo se esta ejecutando directamente 
+    print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} LABERINTO 1.0 INICIADO")
     ventana = tk.Tk() # se crea una instancia de una ventana .Tk()
     juego = partida(ventana) # se envia la ventana como parametro para la variable "ventana_root" del objeto tipo partida
     ventana.mainloop() # genera la ventana principal
