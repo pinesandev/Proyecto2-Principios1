@@ -8,34 +8,47 @@ import threading # para crear un proceso / thread  para el cronometro
 # CLASSES _________________________________________________________________________________________________________________________________
 # CRONOMETRO ------------------------------------------------------------------------------------------------------------------------------
 class cronometro:
-    def __init__(self, tipo_crono):
-        self.segundos_totales = 0
+    def __init__(self, tipo_crono, partida):
+        self.partida = partida
+        self.segundos_totales = partida.contador_tiempo.get()
         self.tipo_crono = tipo_crono
         self.corriendo = False # almacena el estado del cronometro para controlar los procesos
         self.proceso = None # se guarda el proceso / thread que comienza al inicializar el cronometro
+        
 
     # *** FUNCIONES DE CLASE ***
     def iniciar(self):
         # validar que el cronometro no esta corriendo; corriendo == False
         if self.corriendo == False:
-            print("********")
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO: cronometro inicializado")
-            self.corriendo = True
-            self.tiempo_inicio = datetime.now()
-            self.proceso = threading.Thread(target=self.runtime, daemon=True)
-            self.proceso.start()
+            if self.tipo_crono == "regresivo":
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO: cronometro {self.tipo_crono} inicializado")
+                self.corriendo = True
+                self.tiempo_inicio = datetime.now()
+                self.proceso = threading.Thread(target=self.runtime, daemon=True)
+                self.proceso.start()
+            else:
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO: cronometro {self.tipo_crono} inicializado")
+                self.corriendo = True
+                self.tiempo_inicio = datetime.now()
+                self.proceso = threading.Thread(target=self.runtime, daemon=True)
+                self.proceso.start()
+
     
     def runtime(self):
-        print("########")
         while self.corriendo == True:
-            self.segundos_totales += 1
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {self.segundos_totales} s")
             time.sleep(1)
+            if self.tipo_crono == "progresivo" and self.corriendo:
+                self.segundos_totales += 1
+                self.partida.contador_tiempo.set(self.segundos_totales)
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {self.segundos_totales} s")
+            elif self.tipo_crono == "regresivo" and self.corriendo:
+                self.segundos_totales -= 1
+                self.partida.contador_tiempo.set(self.segundos_totales)
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {self.segundos_totales} s")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: cronometro detenido")
 
     def detener(self):
-        self.corriendo = False
-        self.proceso.join() # espera la finalizacion del proceso
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO: cronometro detenido")
+        self.corriendo = False # cambia el estado del cronometro para que el ciclo del runtime termine
 
             
 # CLASE BLOQUE ----------------------------------------------------------------------------------------------------------------------------
@@ -78,7 +91,6 @@ class partida:
         # configuraciones de la ventana principal
         self.ventana_root.title("Laberinto")
         self.ventana_root.geometry("980x750")
-        self.ventana_root.resizable(False, False)
         self.ventana_root.columnconfigure(0, weight=3, minsize=250)
         self.ventana_root.columnconfigure(1, weight=7)
         self.ventana_root.rowconfigure(0, weight=1)
@@ -94,7 +106,7 @@ class partida:
         self.modo_seleccionado = tk.StringVar(value=self.configuraciones_de_juego["tipo_partida"])
         self.dificultad_seleccionada = tk.StringVar(value=self.configuraciones_de_juego["dificultad"])
         self.dimensiones_seleccionadas = tk.StringVar(value=self.configuraciones_de_juego["dimensiones"])
-        self.contador_tiempo = tk.IntVar()
+        self.contador_tiempo = tk.IntVar(value=self.configuraciones_de_juego["tiempo"])
         self.instancia_cronometro = None # guarda el cronometro inicializado en la partida
 
         # estilo customizado para los botones
@@ -185,7 +197,6 @@ class partida:
 
         # *** VICULAR EVENTOS ***
         # se vinculan eventos como cambiar el tamaño de la pantalla y inputs del teclado con su respectiva funcion
-        self.ventana_root.bind("<Configure>", self.on_resize)
         self.ventana_root.bind("<Key>", self.movimiento_teclas) ### VALIDAR PARA ACEPTAR INPUTS UNICAMENTE CUANDO SE INICIA LA PARTIDA
 
     # *** FUNCIONES DE CLASE ***
@@ -245,9 +256,23 @@ class partida:
     def guardar_configuraciones(self):
         # guardar las configuraciones de juego seleccionadas en el menu dentro de un diccionario en el objeto tipo partida (configuraciones_de_juego)
         self.configuraciones_de_juego["tipo_partida"] = self.combo_partida.get()
+        print(self.combo_tiempo.get())
         if self.combo_partida.get() == "Contra Tiempo":
-            self.configuraciones_de_juego["tiempo"] = self.combo_tiempo.get()
+            if self.combo_tiempo.get() == '2':
+                print("dentro 2")
+                self.configuraciones_de_juego["tiempo"] = 120 # contratiempo 2 minutos
+                self.contador_tiempo.set(120)
+            elif self.combo_tiempo.get() == '5':
+                self.configuraciones_de_juego["tiempo"] = 300 # contratiempo 5 minutos
+                self.contador_tiempo.set(300)
+            elif self.combo_tiempo.get() == '7':
+                self.configuraciones_de_juego["tiempo"] = 420 # contratiempo 7 minutos
+                self.contador_tiempo.set(420)
+        else:
+            self.configuraciones_de_juego["tiempo"] = 0
+            self.contador_tiempo.set(0)
         self.configuraciones_de_juego["dificultad"] = self.combo_dificultad.get()
+        self.modo_seleccionado.set(self.configuraciones_de_juego["tipo_partida"])
         self.configuraciones_de_juego["dimensiones"] = self.combo_dimensiones.get()
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
         print(self.configuraciones_de_juego)
@@ -292,6 +317,7 @@ class partida:
             self.etiqueta_tiempo.grid(row=3, column=0, sticky='w')
             self.combo_tiempo.grid(row=4, column=0, pady=(0, 5), sticky='nsew')
             self.combo_tiempo.set(2)
+
         else:
             self.etiqueta_tiempo.grid_forget()
             self.combo_tiempo.grid_forget()
@@ -376,20 +402,16 @@ class partida:
             nueva_columna -= 1
         elif event.keysym == "Right":
             nueva_columna += 1
-            
-        # se agrega un movimiento al contador de movimientos
-        # self.movimientos_partida += 1
-        # print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} movimiento {event.keysym} #{self.movimientos_partida}")
 
         if (0 <= nueva_fila < len(self.laberinto_en_memoria) and 
             0 <= nueva_columna < len(self.laberinto_en_memoria[0]) and
             self.laberinto_en_memoria[nueva_fila][nueva_columna] != 1):
-            self.movimientos_partida += 1
+            self.movimientos_partida += 1 # aumenta los movimientos de la partida
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} movimiento {event.keysym} #{self.movimientos_partida}")
-            old_bloque = self.bloque_matriz[fila][columna]
-            if old_bloque.valor_bloque == 0 and not old_bloque.visitado:
-                old_bloque.set_color("lightblue")
-                old_bloque.visitado = True
+            bloque_anterior = self.bloque_matriz[fila][columna]
+            if bloque_anterior.valor_bloque == 0 and not bloque_anterior.visitado:
+                bloque_anterior.set_color("lightblue")
+                bloque_anterior.visitado = True
                 
             self.posicion_actual_totem = (nueva_fila, nueva_columna)
             self.mostrar_totem(self.posicion_actual_totem)
@@ -402,17 +424,20 @@ class partida:
                     text="¡Ganaste!", font=("Helvetica", 40, "bold"), fill="blue"
                 )
 
-    def on_resize(self, event):
-            """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
-            self.ventana_root.after(10, self.visualizar_laberinto)
-
+    # INICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------------
+    # E: no tiene entradas; comienza la partida
+    # S: la funcion se encarga de cambiar el valor 'partida_iniciada' de la partida; inicia los movimientos en 0; crea un objeto cronometro y lo inicia; dibuja el totem en la pantalla
+    # R: 
     def iniciar_partida(self):
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida iniciada. Usa las flechas para moverte.")
         self.movimientos_partida = 0
         self.partida_iniciada = True # habilita el movimiento del totem
-        self.instancia_cronometro = cronometro("Tipo")
-        self.instancia_cronometro.iniciar()
         self.mostrar_totem(self.posicion_actual_totem) # muestra el totem en la ventana
+        if self.configuraciones_de_juego["tipo_partida"] == "Contra Tiempo":
+            self.instancia_cronometro = cronometro("regresivo", self)
+        else:
+            self.instancia_cronometro = cronometro("progresivo", self)    
+        self.instancia_cronometro.iniciar()
 
     def reiniciar_partida(self):
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Reiniciando partida...")
@@ -420,15 +445,13 @@ class partida:
         self.iniciar_partida()
 
     def autocompletar_laberinto(self):
-        # Esta función requerirá un algoritmo de búsqueda de camino (e.g., A*)
         print("Función de auto-completar aún no implementada.")
 
     def abandonar_partida(self):
-        # Esta función requerirá guardar el estado y/o volver al menú principal
         self.partida_iniciada = False
         self.instancia_cronometro.detener()
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
         self.visualizar_laberinto()
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
 
 # INICIO DE PARTIDA Y VENTANA PRINCIPAL ___________________________________________________________________________________________________
 if __name__ == "__main__": # iniciar la ventana unicamente si el archvo se esta ejecutando directamente 
