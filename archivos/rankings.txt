@@ -1,4 +1,5 @@
 4,Esteban,8x8,19
+4,Pineda,8x8,23
 5,Ana,12x12,45
 5,Esteban,9x9,16
 9,pine,14x14,42
@@ -13,4 +14,4 @@
 45,Joe,14x14,40
 45,Jime,10x10,35
 67,testing,16x16,136
-4,Pineda,8x8,23
+4,asd,8x8,19

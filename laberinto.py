@@ -100,7 +100,6 @@ class partida:
 
         # configuraciones y variables de juego
         self.partida_iniciada = False
-        self.movimientos_partida = 0
         self.cronometro = None # guarda el cronometro inicializado en la partida
         self.ranking = []
         self.laberinto = []
@@ -110,6 +109,7 @@ class partida:
         self.dificultad_seleccionada = tk.StringVar()
         self.dimensiones_seleccionadas = tk.StringVar()
         self.contador_tiempo = tk.IntVar()
+        self.movimientos_partida = tk.IntVar()
         self.nombre_usuario = None
 
         # estilo customizado para los botones
@@ -133,8 +133,8 @@ class partida:
         # las etiquetas mutables cambian en base a la seleccion de configuraciones en el menu del usuario cuando se guardan las configuraciones
         ttk.Label(self.cuadro_juego1, text="Modo:", font=("Courier", 16, "bold")).grid(column=0, row=0, sticky='w') # etiqueta estatica de modo
         ttk.Label(self.cuadro_juego1, textvariable=self.modo_seleccionado, font=("Courier", 14,)).grid(column=1, row=0, sticky='w') # etiqueta mutable de modo
-        ttk.Label(self.cuadro_juego1, text="Dificultad:", font=("Courier", 16, "bold")).grid(column=0, row=1, sticky='w') # etiqueta estatica de dificultad
-        ttk.Label(self.cuadro_juego1, textvariable=self.dificultad_seleccionada, font=("Courier", 14,)).grid(column=1, row=1, sticky='w') # etiqueta mutable de dificultad
+        ttk.Label(self.cuadro_juego1, text="Movimientos:", font=("Courier", 16, "bold")).grid(column=0, row=1, sticky='w') # etiqueta estatica de dificultad
+        ttk.Label(self.cuadro_juego1, textvariable=self.movimientos_partida, font=("Courier", 14,)).grid(column=1, row=1, sticky='w') # etiqueta mutable de dificultad
         ttk.Label(self.cuadro_juego1, text="Dimensiones:", font=("Courier", 16, "bold")).grid(column=2, row=0, sticky='w') # etiqueta estatica de dimensiones
         ttk.Label(self.cuadro_juego1, textvariable=self.dimensiones_seleccionadas, font=("Courier", 14,)).grid(column=3, row=0, sticky='w') # etiqueta mutable de dimeniones
         ttk.Label(self.cuadro_juego1, text="Tiempo:", font=("Courier", 16, "bold")).grid(column=2, row=1, sticky='w') # etiqueta estatica de tiempo
@@ -375,8 +375,8 @@ class partida:
         if (0 <= nueva_fila < len(self.laberinto) and 
             0 <= nueva_columna < len(self.laberinto[0]) and
             self.laberinto[nueva_fila][nueva_columna] != 1):
-            self.movimientos_partida += 1 # aumenta los movimientos de la partida
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} movimiento {event.keysym} #{self.movimientos_partida}")
+            self.movimientos_partida.set(self.movimientos_partida.get() + 1) # aumenta los movimientos de la partida
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} movimiento {event.keysym} #{self.movimientos_partida.get()}")
             bloque_anterior = self.bloques[fila][columna]
             if bloque_anterior.valor == 0 and not bloque_anterior.visitado:
                 bloque_anterior.set_color("lightgreen")
@@ -421,7 +421,7 @@ class partida:
     # R: solo se inicia la partida en caso de que el valor de la partida 'partida_iniciada' sea False
     def iniciar_partida(self):
         if self.partida_iniciada == False:
-            self.movimientos_partida = 0
+            self.movimientos_partida.set(0)
             self.partida_iniciada = True # habilita el movimiento del totem
             self.visualizar_laberinto()
             self.mostrar_totem(self.posicion_totem) # muestra el totem en la ventana
@@ -499,9 +499,9 @@ class partida:
         self.partida_iniciada = False
         if nombre_usuario != "" and partida_ganada == True:
             if self.modo_seleccionado == "Contra Tiempo":
-                self.ranking.append([(300 - self.contador_tiempo.get()), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+                self.ranking.append([(300 - self.contador_tiempo.get()), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida.get()])
             else:
-                self.ranking.append([self.contador_tiempo.get(), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+                self.ranking.append([self.contador_tiempo.get(), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida.get()])
             self.guardar_rankings()
             self.ranking = self.cargar_rankings("archivos/rankings.txt")
             self.mostrar_ranking()
