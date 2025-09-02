@@ -39,8 +39,8 @@ class cronometro:
                     self.detener() # se detiene el cronometro         
                     ventana_perdida = tk.Toplevel(self.partida.ventana_root)
                     ventana_perdida.title("¡LABERINTO FALLIDO!")
-                    # ventana_perdida.geometry("300x200")
                     ventana_perdida.resizable(False, False)
+                    ventana_perdida.protocol("WM_DELETE_WINDOW", lambda: None)
                     ventana_perdida.geometry(f"300x200+{self.partida.ventana_root.winfo_x() + (self.partida.ventana_root.winfo_width()//2) - (280//2)}+{self.partida.ventana_root.winfo_y() + (self.partida.ventana_root.winfo_height()//2) - (150//2)}")
                     ttk.Label(ventana_perdida, text="Se acabo el tiempo", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
                     ttk.Button(ventana_perdida, text="Volver", command=lambda: self.partida.finalizar_partida(None, ventana_perdida, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
@@ -388,8 +388,8 @@ class partida:
                 self.cronometro.detener() # se detiene el cronometro         
                 ventana_gane = tk.Toplevel(self.ventana_root)
                 ventana_gane.title("¡LABERINTO COMPLETADO!")
-                # ventana_gane.geometry("300x200")
                 ventana_gane.resizable(False, False)
+                ventana_gane.protocol("WM_DELETE_WINDOW", lambda: None)
                 ventana_gane.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
                 ttk.Label(ventana_gane, text="Digite su Nombre", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
                 entrada_usuario = ttk.Entry(ventana_gane, width=30, textvariable=self.nombre_usuario)
@@ -469,13 +469,13 @@ class partida:
                     self.ventana_root.after(100)
 
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Laberinto completado automáticamente.")
-                ventana_perdida = tk.Toplevel(self.ventana_root)
-                ventana_perdida.title("¡LABERINTO COMPLETADO!")
-                # ventana_perdida.geometry("300x170")
-                ventana_perdida.resizable(False, False)
-                ventana_perdida.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
-                ttk.Label(ventana_perdida, text="Laberinto autocompletado", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
-                ttk.Button(ventana_perdida, text="Volver", command=lambda: self.finalizar_partida(None, ventana_perdida, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
+                ventana_auto = tk.Toplevel(self.ventana_root)
+                ventana_auto.title("¡LABERINTO COMPLETADO!")
+                ventana_auto.resizable(False, False)
+                ventana_auto.protocol("WM_DELETE_WINDOW", lambda: None)
+                ventana_auto.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
+                ttk.Label(ventana_auto, text="Laberinto autocompletado", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
+                ttk.Button(ventana_auto, text="Volver", command=lambda: self.finalizar_partida(None, ventana_auto, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
             else:
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: No se encontró solución al laberinto.")
 
