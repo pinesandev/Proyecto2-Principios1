@@ -159,6 +159,7 @@ class partida:
         self.cuadro_menu = ttk.Frame(ventana_root, padding=15, relief="raised")
         self.cuadro_menu.grid(row=0, column=0, sticky='nsew')
         self.cuadro_menu.columnconfigure(0, weight=1)
+        self.cuadro_menu.rowconfigure(11, weight=1)
 
         # *** WIDGETS | CUADRO MENU *** 
         ttk.Label(self.cuadro_menu, text="Menu", font=("Courier", 20, "bold")).grid(row=0, column=0, pady=(0, 15))
@@ -178,7 +179,7 @@ class partida:
         # porcion del menu para mostrar el ranking
         ttk.Label(self.cuadro_menu, text="Ranking", font=("Courier", 20, "bold")).grid(row=10, column=0, pady=(25, 5))        
         self.ranking_treeview = ttk.Treeview(self.cuadro_menu, columns=("Tiempo", "Nombre", "Tamaño", "Pasos"), show="headings")
-        self.ranking_treeview.grid(row=12, column=0, pady=(0, 5), sticky='nsew')
+        self.ranking_treeview.grid(row=11, column=0, pady=(0, 5), sticky='nsew')
         self.ranking_treeview.heading("Tiempo", text="Tiempo", anchor=tk.W)
         self.ranking_treeview.heading("Nombre", text="Nombre", anchor=tk.W)
         self.ranking_treeview.heading("Tamaño", text="Tamaño", anchor=tk.W)
@@ -227,7 +228,7 @@ class partida:
         tiempo = int(linea_partida[0])
         dimensiones = int(linea_partida[2].split("x")[0])
         movimientos = int(linea_partida[3])
-        return (-dimensiones, tiempo, movimientos)
+        return (tiempo,-dimensiones, movimientos)
 
     # CARGAR RANKING ----------------------------------------------------------------------------------------------------------------------
     # E: Ruta al archivo de texto que contiene el ranking guardado
