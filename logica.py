@@ -28,9 +28,6 @@ R: El archivo debe existir
             fila = [int(celda) for celda in linea.split(' ')]
             laberinto.append(fila)
     return laberinto
-
-laberinto = cargar_laberinto('/Users/johel/Desktop/Johel/Johel/TEC Johel/Principios de Progra/Proyectos/Proyecto2-Principios1/archivos/laberintos/Fácil/8x8.txt')
-
 # ---------------------------- VALIDAR MATRIZ ---------------------------
 def validar_laberinto(matriz):
 
@@ -167,8 +164,6 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
             
     return resultado
 
-laberinto_valido = validar_laberinto(laberinto)
-
 # ---------------------------- CARGAR RANKING ---------------------------
 def cargar_rankings(ruta):
     '''
@@ -189,8 +184,6 @@ R: El archivo debe existir
             fila = [valor for valor in linea.split(',')]
             rankings+=[fila]            
     return rankings
-
-rankings = cargar_rankings('/Users/johel/Desktop/Johel/Johel/TEC Johel/Principios de Progra/Proyectos/Proyecto2-Principios1/archivos/rankings.txt')
 
 # ---------------------------- FORMATO TIEMPO RANKING ---------------------------
 
@@ -216,9 +209,9 @@ def validar_ranking(rankings):
     
         # Columnas de valores de las filas de la matriz de rankings
         tiempo = fila[0]
-        nombre = fila[1].strip().lower()
-        dimensiones = fila[2].strip()
-        movimientos = fila[3].strip()
+        nombre = fila[1].lower()
+        dimensiones = fila[2]
+        movimientos = fila[3]
 
         # 2. Validar que exista un formato de tiempo valido HH:MM:SS
         try:   
@@ -285,7 +278,6 @@ def validar_ranking(rankings):
 
     return filas_validas
 
-ranking_valido = validar_ranking(rankings)
 
 # ---------------------------- ORDENAR RANKING ---------------------------
 # FUNCION AUXILIAR 
@@ -297,5 +289,3 @@ def mostrar_ranking(ranking):
     for i , fila in enumerate(ranking, start=1):
         print(f"{i}. {fila['nombre']} - Tiempo: {fila['tiempo']} - Movimientos: {fila['movimientos']} - Dimensiones: {fila['dimensiones']}")
 
-ranking_valido.sort(key=clave_segs_dimens_movs)
-mostrar_ranking(ranking_valido) 

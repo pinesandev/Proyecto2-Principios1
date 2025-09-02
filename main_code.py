@@ -1,9 +1,10 @@
 # IMPORTS / LIBRARIES
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, PhotoImage
 import time # utilizado para utilizar la funcion sleep()
-from datetime import datetime # para manejar todos los tiempos del programa
+from datetime import datetime, timedelta # para manejar todos los tiempos del programa
 import threading # para crear un proceso / thread  para el cronometro
+from logica import validar_ranking
 
 # CLASSES _________________________________________________________________________________________________________________________________
 # CRONOMETRO ------------------------------------------------------------------------------------------------------------------------------
@@ -131,7 +132,7 @@ class partida:
         # botones del area de juego 1 para controlar el funcionamiento de la patida
         ttk.Button(self.cuadro_juego1, text="Iniciar", command=self.iniciar_partida, style='estilo_custom.TButton').grid(column=0, row=2, sticky='nsew')
         ttk.Button(self.cuadro_juego1, text="Reiniciar", command=self.reiniciar_partida, style='estilo_custom.TButton').grid(column=1, row=2, sticky='nsew')
-        ttk.Button(self.cuadro_juego1, text="Auto completar", command=self.autocompletar_laberinto, style='estilo_custom.TButton').grid(column=2, row=2, sticky='nsew')
+        ttk.Button(self.cuadro_juego1, text="Auto completar", command=self.autocompletar, style='estilo_custom.TButton').grid(column=2, row=2, sticky='nsew')
         ttk.Button(self.cuadro_juego1, text="Abandonar", command=self.abandonar_partida, style='estilo_custom.TButton').grid(column=3, row=2, sticky='nsew')
 
         # *** CUADRO AREA DE JUEGO 2 ***
@@ -154,9 +155,6 @@ class partida:
         self.combo_partida = ttk.Combobox(self.cuadro_menu, values=["Normal", "Contra Tiempo"])
         self.combo_partida.grid(row=2, column=0, sticky='nsew', pady=(0, 5))
         self.combo_partida.set("Normal")
-        self.combo_partida.bind("<<ComboboxSelected>>", self.tiempo_partida_dinamico)
-        self.etiqueta_tiempo = ttk.Label(self.cuadro_menu, text="Minutos de Juego", font=("Courier", 14, "bold", "italic"))
-        self.combo_tiempo = ttk.Combobox(self.cuadro_menu, values=[2,5,7])
         ttk.Label(self.cuadro_menu, text="Dificultad", font=("Courier", 14, "bold", "italic")).grid(row=5, column=0, sticky='w')
         self.combo_dificultad = ttk.Combobox(self.cuadro_menu, values=["Fácil", "Medio", "Difícil"])
         self.combo_dificultad.grid(row=6, column=0, sticky='nsew', pady=(0, 5))
@@ -184,6 +182,7 @@ class partida:
         self.dimensiones_dinamicas(None) # dimensiones dinamicas toma un evento como parametro; en este caso un cambio en el combobox de dificultad de partida
         self.guardar_configuraciones() # se cargan las confoguraciones en base a los valores por defecto de todos los comboboxes en el menu
         self.ranking = self.cargar_rankings("archivos/rankings.txt") # se cargan los rankings
+        validar_ranking(self.ranking)
         self.mostrar_ranking() # se carga el rakning en el treeview
 
         # *** VICULAR EVENTOS ***
@@ -246,32 +245,35 @@ class partida:
     # S: no tiene salidas; el resultado de invocar la funcion es modificar la variable global donde se guardan las configuraciones de juego antes de comenzar
     # R: TBD
     def guardar_configuraciones(self):
-        # guardar las configuraciones de juego seleccionadas en el menu dentro de un diccionario en el objeto tipo partida (configuraciones_de_juego)
-        self.modo_seleccionado.set(self.combo_partida.get())
-        if self.modo_seleccionado.get() == "Contra Tiempo": # se valida la configuracion guardada en el diccionario para asignar el valor de segundos correctamente
-            if self.combo_tiempo.get() == '2':
-                # self.configuraciones_de_juego["tiempo"] = 120 # contratiempo 2 minutos
-                self.contador_tiempo.set(120)
-            elif self.combo_tiempo.get() == '5':
-                # self.configuraciones_de_juego["tiempo"] = 300 # contratiempo 5 minutos
+        if self.partida_iniciada == False: # solo guarda las configuraciones cuando la partida esta inactiva
+            # guardar las configuraciones de juego seleccionadas en el menu dentro de un diccionario en el objeto tipo partida (configuraciones_de_juego)
+            self.modo_seleccionado.set(self.combo_partida.get())
+            if self.modo_seleccionado.get() == "Contra Tiempo": # se valida la configuracion guardada en el diccionario para asignar el valor de segundos correctamente
                 self.contador_tiempo.set(300)
-            elif self.combo_tiempo.get() == '7':
-                # self.configuraciones_de_juego["tiempo"] = 420 # contratiempo 7 minutos
-                self.contador_tiempo.set(420)
-        else:
-            # self.configuraciones_de_juego["tiempo"] = 0 # partida normal
-            self.contador_tiempo.set(0)
-        self.dificultad_seleccionada.set(self.combo_dificultad.get())
-        self.dimensiones_seleccionadas.set(self.combo_dimensiones.get())
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
-        print(f"Tipo: {self.modo_seleccionado.get()} | Segundos: {self.contador_tiempo.get()} | Dificultad: {self.dificultad_seleccionada.get()} | Dimensiones: {self.dimensiones_seleccionadas.get()}")
-        
-        # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
-        ruta_laberinto = f"archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
-        self.laberinto = self.cargar_laberinto(ruta_laberinto)
-        
-        self.visualizar_laberinto()
+            else:
+                self.contador_tiempo.set(0)
+            self.dificultad_seleccionada.set(self.combo_dificultad.get())
+            self.dimensiones_seleccionadas.set(self.combo_dimensiones.get())
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
+            print(f"Tipo: {self.modo_seleccionado.get()} | Segundos: {self.contador_tiempo.get()} | Dificultad: {self.dificultad_seleccionada.get()} | Dimensiones: {self.dimensiones_seleccionadas.get()}")
+            
+            # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
+            ruta_laberinto = f"archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
+            self.laberinto = self.cargar_laberinto(ruta_laberinto)
+            print(self.laberinto)
+            # self.visualizar_laberinto()
 
+    # GUARDAR PARTIDA ---------------------------------------------------------------------------------------------------------------------
+    # E: 
+    # S: 
+    # R: TBD
+    def guardar_partida(self):
+        print(self.ranking)
+        print([str(timedelta(seconds=self.contador_tiempo.get())), "asd", self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+        self.ranking.append([str(timedelta(seconds=self.contador_tiempo.get())), "asd", self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+        self.mostrar_ranking()
+        return
+    
     # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
     # E: el parametro de entrada es un evento que sucede al cambiar la seleccion de dificultad en el combobox del menu
     # S: no tiene salidas; la funcion se encarga de cambiar los valores disponibles en el combobox de dimeniones en base a la dificultad seleccionada
@@ -285,20 +287,6 @@ class partida:
             dimension_opciones = ["14x14", "15x15", "16x16"]
         self.combo_dimensiones["values"] = dimension_opciones
         self.combo_dimensiones.set(dimension_opciones[0])
-
-    # TIEMPO PARTIDA DINAMICO -------------------------------------------------------------------------------------------------------------
-    # E: el paramtro de entrada es un evento que sucede al cambiar la seleccion del modo de juego en el combobox del menu
-    # S: no tiene salida; la funcion se encarga de mostrar o esconder la etiqueta y combobox de seleccion de minutos de partida
-    # R: TBD
-    def tiempo_partida_dinamico(self, evento):
-        if self.combo_partida.get() == "Contra Tiempo":
-            self.etiqueta_tiempo.grid(row=3, column=0, sticky='w')
-            self.combo_tiempo.grid(row=4, column=0, pady=(0, 5), sticky='nsew')
-            self.combo_tiempo.set(2)
-
-        else:
-            self.etiqueta_tiempo.grid_forget()
-            self.combo_tiempo.grid_forget()
     
     # VISUALIZAR LABERINTO ----------------------------------------------------------------------------------------------------------------
     # E: no tiene parametros de entrada
@@ -328,24 +316,19 @@ class partida:
     # E: como parametro de entrada se recibe una tupla con los valores (fila, columna) para manejar la posicion del token
     # S: no tiene salida; la funcion se encarga de mover el token en la pantalla; cada instancia de la funcion limpia y vuelve a mostrar el token en base a la posicion actual en la partida
     # R: TBD
-    def mostrar_totem(self, position):
+    def mostrar_totem(self, posicion):
         self.canvas_laberinto.delete("totem") # se borra el token de la posicion actual; esta funcion se llama cada movimiento que se hace en la posicion del token
-        fila, columna = position
-        
+        fila, columna = posicion
         tamaño_celda = min(self.canvas_laberinto.winfo_width() // len(self.laberinto[0]), 
                         self.canvas_laberinto.winfo_height() // len(self.laberinto))
-        
         centro_fila = columna * tamaño_celda + tamaño_celda / 2
         centro_columna = fila * tamaño_celda + tamaño_celda / 2
-        
         tamaño_totem = tamaño_celda / 3
-        
         x1 = centro_fila - tamaño_totem
         y1 = centro_columna - tamaño_totem
         x2 = centro_fila + tamaño_totem
         y2 = centro_columna + tamaño_totem
-        
-        self.canvas_laberinto.create_oval(x1, y1, x2, y2, fill="blue", tags="totem") # vuelve a generar el totem en al pantalla con su posicion actualizada
+        self.canvas_laberinto.create_oval(x1, y1, x2, y2, fill="gold", tags="totem") # vuelve a generar el totem en al pantalla con su posicion actualizada
 
     # MOVIMIENTO TECLAS -------------------------------------------------------------------------------------------------------------------
     # E: el paremetro de entrada es un evento; en este caso el evento de pserionar una tecla con el enfoque en la venta de juego
@@ -377,50 +360,62 @@ class partida:
             if bloque_anterior.valor == 0 and not bloque_anterior.visitado:
                 bloque_anterior.set_color("lightblue")
                 bloque_anterior.visitado = True
-                
             self.posicion_totem = (nueva_fila, nueva_columna)
             self.mostrar_totem(self.posicion_totem)
-            
             if self.laberinto[nueva_fila][nueva_columna] == 2:
+                self.cronometro.detener() # se detiene el cronometro
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ¡Has llegado al final!")
-                self.canvas_laberinto.create_text(
-                    self.canvas_laberinto.winfo_width() / 2,
-                    self.canvas_laberinto.winfo_height() / 2,
-                    text="¡Ganaste!", font=("Helvetica", 40, "bold"), fill="blue"
-                )
+                ventana_gane = tk.Toplevel(self.ventana_root)
+                ventana_gane.title("¡LABERINTO COMPLETADO!")
+                ventana_gane.geometry("280x150")
+                ventana_gane.resizable(False, False)
+                ventana_gane.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
+                ttk.Label(ventana_gane, text="Digite su Nombre", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
+                entrada_gane = tk.Entry(ventana_gane, width=30).place(relx=0.5, rely=0.5, anchor="center")
+                boton_guardar = ttk.Button(ventana_gane, text="Guardar Configuracion", command=self.guardar_partida, style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
 
-    def on_resize(self, event):
-            """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
-            self.ventana_root.after(1, self.visualizar_laberinto)
+
+    # def on_resize(self, event):
+    #         """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
+    #         self.ventana_root.after(1, self.visualizar_laberinto)
 
     # INICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas; comienza la partida
     # S: la funcion se encarga de cambiar el valor 'partida_iniciada' de la partida; inicia los movimientos en 0; crea un objeto cronometro y lo inicia; dibuja el totem en la pantalla
     # R: 
     def iniciar_partida(self):
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida iniciada. Usa las flechas para moverte.")
-        self.movimientos_partida = 0
-        self.partida_iniciada = True # habilita el movimiento del totem
-        self.mostrar_totem(self.posicion_totem) # muestra el totem en la ventana
-        if self.modo_seleccionado.get() == "Contra Tiempo":
-            self.cronometro = cronometro("regresivo", self)
-        else:
-            self.cronometro = cronometro("progresivo", self)    
-        self.cronometro.iniciar()
+        if self.partida_iniciada == False:
+            self.movimientos_partida = 0
+            self.partida_iniciada = True # habilita el movimiento del totem
+            self.visualizar_laberinto()
+            self.mostrar_totem(self.posicion_totem) # muestra el totem en la ventana
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida iniciada. Usa las flechas para moverte.")
+            if self.modo_seleccionado.get() == "Contra Tiempo":
+                self.cronometro = cronometro("regresivo", self)
+            else:
+                self.cronometro = cronometro("progresivo", self)    
+            self.cronometro.iniciar()
+            
 
     def reiniciar_partida(self):
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Reiniciando partida...")
-        self.visualizar_laberinto()
-        self.iniciar_partida()
+        if self.partida_iniciada == True:
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Reiniciando partida...")
+            self.partida_iniciada = False
+            self.cronometro.detener()
+            self.guardar_configuraciones()
+            # self.visualizar_laberinto()
+            self.iniciar_partida()
 
-    def autocompletar_laberinto(self):
-        print("Función de auto-completar aún no implementada.")
+    def autocompletar(self):
+        if self.partida_iniciada == True:
+            print("Función de auto-completar aún no implementada.")
 
     def abandonar_partida(self):
-        self.partida_iniciada = False
-        self.cronometro.detener()
-        self.visualizar_laberinto()
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
+        if self.partida_iniciada == True:
+            self.partida_iniciada = False
+            self.cronometro.detener()
+            self.visualizar_laberinto()
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
 
 # INICIO DE PARTIDA Y VENTANA PRINCIPAL ___________________________________________________________________________________________________
 if __name__ == "__main__": # iniciar la ventana unicamente si el archvo se esta ejecutando directamente 
