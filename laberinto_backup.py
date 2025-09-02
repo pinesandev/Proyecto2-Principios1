@@ -39,7 +39,7 @@ class cronometro:
                     self.detener() # se detiene el cronometro         
                     ventana_perdida = tk.Toplevel(self.partida.ventana_root)
                     ventana_perdida.title("¡LABERINTO FALLIDO!")
-                    # ventana_perdida.geometry("300x200")
+                    ventana_perdida.geometry("280x150")
                     ventana_perdida.resizable(False, False)
                     ventana_perdida.geometry(f"300x200+{self.partida.ventana_root.winfo_x() + (self.partida.ventana_root.winfo_width()//2) - (280//2)}+{self.partida.ventana_root.winfo_y() + (self.partida.ventana_root.winfo_height()//2) - (150//2)}")
                     ttk.Label(ventana_perdida, text="Se acabo el tiempo", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
@@ -221,9 +221,9 @@ class partida:
         return laberinto
 
     # LLAVE ORDEN -------------------------------------------------------------------------------------------------------------------------
-    # E: una lista representativa de la linea de los rankings
-    # S: una tupla de 3 valores con el tiempo, las dimensiones y los movimientos de cada partida
-    # R: el parametro de entrada debe ser de tipo lista; no tiene validaciones programadas
+    # E: 
+    # S:
+    # R:
     def llave(self, linea_partida):
         tiempo = int(linea_partida[0])
         dimensiones = int(linea_partida[2].split("x")[0])
@@ -254,6 +254,7 @@ class partida:
                     indice_minimo = ii
             lista_ranking[i], lista_ranking[indice_minimo] = lista_ranking[indice_minimo], lista_ranking[i]
         return lista_ranking
+
 
     # GUARDAR INFORMACION -----------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas
@@ -379,7 +380,7 @@ class partida:
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} movimiento {event.keysym} #{self.movimientos_partida}")
             bloque_anterior = self.bloques[fila][columna]
             if bloque_anterior.valor == 0 and not bloque_anterior.visitado:
-                bloque_anterior.set_color("lightgreen")
+                bloque_anterior.set_color("lightblue")
                 bloque_anterior.visitado = True
             self.posicion_totem = (nueva_fila, nueva_columna)
             self.mostrar_totem(self.posicion_totem)
@@ -388,7 +389,7 @@ class partida:
                 self.cronometro.detener() # se detiene el cronometro         
                 ventana_gane = tk.Toplevel(self.ventana_root)
                 ventana_gane.title("¡LABERINTO COMPLETADO!")
-                # ventana_gane.geometry("300x200")
+                ventana_gane.geometry("280x150")
                 ventana_gane.resizable(False, False)
                 ventana_gane.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
                 ttk.Label(ventana_gane, text="Digite su Nombre", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
@@ -396,29 +397,10 @@ class partida:
                 entrada_usuario.place(relx=0.5, rely=0.5, anchor="center")
                 ttk.Button(ventana_gane, text="Guardar Partida", command=lambda: self.finalizar_partida(entrada_usuario.get(), ventana_gane, True), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
 
-    # RESOLVER LABERINTO ------------------------------------------------------------------------------------------------------------------
-    # E: la funcion toma como parametros el laberinto cargado en la partida, la posición de fila y columna del totem y una matriz nueva generada únicamente para iterar los caminos en la validación
-    # S: la funcion retorna una lista con el camino correcto para iterar y mostrar en la ventana de laberinto; en caso de no tener salida, retorna False
-    # R: solo opera cuanto la posicion del totem se encuentra dentro de un rango valido en el laberinto (camino o borde de la matriz)
-    def resolver_laberinto(self, laberinto, fila, columna, matriz_visitados):
-        if (fila < 0 or fila >= len(laberinto) or
-            columna < 0 or columna >= len(laberinto[0]) or
-            laberinto[fila][columna] == 1 or
-            matriz_visitados[fila][columna]): # valida que la posicion se mantenga dentro de los limites del laberinto / matriz
-            return False
-        if laberinto[fila][columna] == 2: # condicion de finalizacion
-            return [(fila, columna)]
-        matriz_visitados[fila][columna] = True
-        for x, y in [(-1,0), (1,0), (0,-1), (0,1)]:
-            camino_correcto = self.resolver_laberinto(laberinto, fila+x, columna+y, matriz_visitados)
-            if camino_correcto:
-                return [(fila, columna)] + camino_correcto
-        return False
-
     # INICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas; comienza la partida
-    # S: no tiene salidas; la funcion se encarga de cambiar el valor 'partida_iniciada' de la partida; inicia los movimientos en 0; crea un objeto cronometro y lo inicia; dibuja el totem en la pantalla
-    # R: solo se inicia la partida en caso de que el valor de la partida 'partida_iniciada' sea False
+    # S: la funcion se encarga de cambiar el valor 'partida_iniciada' de la partida; inicia los movimientos en 0; crea un objeto cronometro y lo inicia; dibuja el totem en la pantalla
+    # R: 
     def iniciar_partida(self):
         if self.partida_iniciada == False:
             self.movimientos_partida = 0
@@ -433,56 +415,30 @@ class partida:
             self.cronometro.iniciar()
 
     # REINICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------
-    # E: la funcion no tiene entradas; reinicia la partida
-    # S: no tiene salidas; la funcion se encarga de imprimir en consola que la partida fue reiniciada, cambia el estado de partida_iniciada temporalmente a Falso, detiene el cronometro, vuelve a guardar las configuraciones y actualiza la pantalla y por ultimo inicia la partida nuevamente
-    # R: solo se puede reiniciar la partida en caso de que el valor de partida_iniciada sea True
+    # E: 
+    # S: 
+    # R: TBD     
     def reiniciar_partida(self):
         if self.partida_iniciada == True:
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Reiniciando partida...")
             self.partida_iniciada = False
             self.cronometro.detener()
             self.guardar_configuraciones()
+            # self.visualizar_laberinto()
             self.iniciar_partida()
 
     # AUTOCOMPLETAR -----------------------------------------------------------------------------------------------------------------------
-    # E: no tiene entradas; la funcion se encarga de autocompletar el laberinto una vez que se conozca la solucion
-    # S: no tiene salidas; esta funcion llama la funcion resolver laberinto para obtener ya sea False en caso de no tener solucion y la lista de movimientos en caso de existir una salida encontrada
-    # R: solo se puede autocompletar la partida en caso de que el valor de partida_iniciada sea True
-    def autocompletar(self):   
+    # E: 
+    # S: 
+    # R: TBD
+    def autocompletar(self):
         if self.partida_iniciada == True:
-            self.partida_iniciada = False
-            self.cronometro.detener()
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Autocompletando partida")
-            matriz_visitados = [[False for _ in fila] for fila in self.laberinto]
-            fila_inicio, columna_inicio = self.posicion_totem
-            camino_meta = self.resolver_laberinto(self.laberinto, fila_inicio, columna_inicio, matriz_visitados)
-
-            if camino_meta: # en caso de que la lista sea algo diferente de None, False o []
-                for fila, columna in camino_meta:
-                    bloque_actual = self.bloques[fila][columna]
-                    if bloque_actual.valor == 0:
-                        bloque_actual.set_color("lightgreen")
-                        bloque_actual.visitado = True
-                    self.posicion_totem = (fila, columna)
-                    self.mostrar_totem(self.posicion_totem)
-                    self.ventana_root.update()
-                    self.ventana_root.after(100)
-
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Laberinto completado automáticamente.")
-                ventana_perdida = tk.Toplevel(self.ventana_root)
-                ventana_perdida.title("¡LABERINTO COMPLETADO!")
-                # ventana_perdida.geometry("300x170")
-                ventana_perdida.resizable(False, False)
-                ventana_perdida.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
-                ttk.Label(ventana_perdida, text="Laberinto autocompletado", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
-                ttk.Button(ventana_perdida, text="Volver", command=lambda: self.finalizar_partida(None, ventana_perdida, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
-            else:
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: No se encontró solución al laberinto.")
-
+            print("Función de auto-completar aún no implementada.")
+    
     # ABANDONAR PARTIDA -------------------------------------------------------------------------------------------------------------------
-    # E: la funcion no tiene entradas; abandona la partida
-    # S: la funcion no tiene salidas; se encarga de abandonar la partida en base a la desicion del usuario
-    # R: solo se puede abandonar la partida en caso de que el valor de partida_iniciada sea True
+    # E: 
+    # S: 
+    # R: TBD
     def abandonar_partida(self):
         if self.partida_iniciada == True:
             self.partida_iniciada = False
@@ -492,22 +448,24 @@ class partida:
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
 
     # FINALIZAR PARTIDA -------------------------------------------------------------------------------------------------------------------
-    # E: esta funcion toma como parametros de entrada el nombre del usuario, la ventana emergente y una variable bool para establecer si la partida fue ganada o no
-    # S: no tiene salidas; la funcion se encarga de guardar el ranking en caso de que la partida haya sido ganada y limpiar  el laberinto recargando las configuraciones; en caso de ser una partida perdida, solo se limpia el laberinto y se vuelve a cargar la configuracion de partida
-    # R: solo se puede finalizar la partida en caso de que el valor de partida_iniciada sea True
-    def finalizar_partida(self, nombre_usuario, ventana_emergente, partida_ganada):
+    # E: 
+    # S: 
+    # R: TBD
+    def finalizar_partida(self, nombre_usuario, ventana, partida_ganada):
         self.partida_iniciada = False
         if nombre_usuario != "" and partida_ganada == True:
+            print(self.ranking)
             if self.modo_seleccionado == "Contra Tiempo":
                 self.ranking.append([(300 - self.contador_tiempo.get()), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida])
             else:
                 self.ranking.append([self.contador_tiempo.get(), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+            print(self.ranking)
             self.guardar_rankings()
             self.ranking = self.cargar_rankings("archivos/rankings.txt")
             self.mostrar_ranking()
         self.guardar_configuraciones()
         self.visualizar_laberinto()
-        ventana_emergente.destroy()
+        ventana.destroy()
 
 # INICIO DE PARTIDA Y VENTANA PRINCIPAL ___________________________________________________________________________________________________
 if __name__ == "__main__": # iniciar la ventana unicamente si el archvo se esta ejecutando directamente 
