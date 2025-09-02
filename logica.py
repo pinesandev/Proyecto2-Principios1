@@ -25,7 +25,7 @@ R: El archivo debe existir
                 continue
             if linea == '': 
                 continue
-            fila = [int(celda) for celda in linea.split(',')]
+            fila = [int(celda) for celda in linea.split(' ')]
             laberinto.append(fila)
     return laberinto
 
@@ -204,11 +204,12 @@ def formatear_tiempo(string_tiempo):
 def validar_ranking(rankings):
 
     filas_validas = []
-    errores = False # Acumulador de errores. En los testings se descubrio que usar continue, hace que si hay mas de un bug en una sola fila, solo se imprime el error del primer bug 
+    
 
     # 1. Validar misma cantidad de columnas en todas las filas  
     for indice_fila in range(len(rankings)):
         fila = rankings[indice_fila]
+        errores = False # Acumulador de errores. En los testings se descubrio que usar continue, hace que si hay mas de un bug en una sola fila, solo se imprime el error del primer bug 
         if len(fila) != 4: # ranking siempre va a ser de 4 columnas, por lo que podemos 'hardcode' 4 
             print(f'ERROR. Fila {indice_fila+1} debe tener solamente 4 columnas')
             errores = True
@@ -274,7 +275,10 @@ def validar_ranking(rankings):
             'nombre': nombre.capitalize(),
             'dimensiones': dimensiones,
             'movimientos': movimientos,
-            'segundos': formatear_tiempo(tiempo)
+            'segundos': formatear_tiempo(tiempo),
+            'filas': fil,
+            'columnas': col, 
+            'area': fil * col   # se crea una int de area para poder utilizarlo como verificador de desempate 
         }
 
         filas_validas.append(registro)
@@ -285,29 +289,13 @@ ranking_valido = validar_ranking(rankings)
 
 # ---------------------------- ORDENAR RANKING ---------------------------
 # FUNCION AUXILIAR 
-def clave_segundos(fila):
-    return fila["segundos"]
+def clave_segs_dimens_movs(ranking):
+    return (ranking["segundos"], -ranking['area'], ranking['movimientos'])
 
-def ordenar_ranking(ranking_valido):
+def mostrar_ranking(ranking):
+    print('|||||| RANKING DE JUADORES ||||||')
+    for i , fila in enumerate(ranking, start=1):
+        print(f"{i}. {fila['nombre']} - Tiempo: {fila['tiempo']} - Movimientos: {fila['movimientos']} - Dimensiones: {fila['dimensiones']}")
 
-    # RANKEADO BURBUJA 
-    # largo_ranking = len(ranking_valido)
-
-    # for pasadas in range(largo_ranking):
-    #     limite = largo_ranking - pasadas - 1    
-                          
-    #     for j in range(limite):
-    #         tiempo_actual = ranking_valido[j]["segundos"]
-    #         tiempo_siguiente = ranking_valido[j+1]["segundos"]
-
-    #         if tiempo_actual > tiempo_siguiente:
-                
-    #             temp = ranking_valido[j]
-    #             ranking_valido[j] = ranking_valido[j+1]
-    #             ranking_valido[j+1] = temp
-
-    ranking_valido.sort(key=clave_segundos)
-    return ranking_valido
-
-ranking_ordenado = ordenar_ranking(ranking_valido)
-print(ranking_ordenado)
+ranking_valido.sort(key=clave_segs_dimens_movs)
+mostrar_ranking(ranking_valido) 
