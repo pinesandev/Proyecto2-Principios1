@@ -6,28 +6,6 @@ import time
 # se van a integrar en formato docstring, para poder acceder a ellas desde cualquier parte del programa con mas facilidad.
 # Se accede con help(nombre_funcion)
 
-# ---------------------------- CARGAR LABERINTO ---------------------------
-def cargar_laberinto(ruta): # La ruta se elije en el UI cuando el usuario seleccione una dificultad
-
-    ''' 
-FUNCION PARA CARGAR LABERINTOS DESDE UN ARCHIVO DE TEXTO
-E: Ruta al archivo de texto que contiene el laberinto seleccionada por el usuario en el UI
-S: Devuelve una matriz que representa el laberinto seleccionado
-R: El archivo debe existir
-    ''' 
-
-    laberinto = []
-    with open(ruta, 'r') as archivo: # with abre y cierra el archivo automaticamente
-        for linea in archivo:
-            # Ignorar líneas que comienzan con '#' o espacio en blanco
-            linea = linea.strip()
-            if linea.startswith('#'):
-                continue
-            if linea == '': 
-                continue
-            fila = [int(celda) for celda in linea.split(' ')]
-            laberinto.append(fila)
-    return laberinto
 # ---------------------------- VALIDAR MATRIZ ---------------------------
 def validar_laberinto(matriz):
 
@@ -164,27 +142,6 @@ R: - Todas las filas deben tener la misma cantidad de columnas.
             
     return resultado
 
-# ---------------------------- CARGAR RANKING ---------------------------
-def cargar_rankings(ruta):
-    '''
-FUNCION PARA CARGAR RANKINGS DESDE UN ARCHIVO DE TEXTO
-E: Ruta al archivo de texto que contiene los rankings
-S: Devuelve una matriz con rankings 
-R: El archivo debe existir
-
-    '''
-    rankings = []
-    with open(ruta, 'r') as archivo: 
-        for linea in archivo:
-            linea = linea.strip()
-            if linea.startswith('#'):
-                continue
-            if linea == '':
-                continue
-            fila = [valor for valor in linea.split(',')]
-            rankings+=[fila]            
-    return rankings
-
 # ---------------------------- FORMATO TIEMPO RANKING ---------------------------
 
 def formatear_tiempo(string_tiempo):
@@ -283,9 +240,4 @@ def validar_ranking(rankings):
 # FUNCION AUXILIAR 
 def clave_segs_dimens_movs(ranking):
     return (ranking["segundos"], -ranking['area'], ranking['movimientos'])
-
-def mostrar_ranking(ranking):
-    print('|||||| RANKING DE JUADORES ||||||')
-    for i , fila in enumerate(ranking, start=1):
-        print(f"{i}. {fila['nombre']} - Tiempo: {fila['tiempo']} - Movimientos: {fila['movimientos']} - Dimensiones: {fila['dimensiones']}")
 

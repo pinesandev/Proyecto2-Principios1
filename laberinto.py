@@ -4,7 +4,6 @@ from tkinter import ttk, PhotoImage
 import time # utilizado para utilizar la funcion sleep()
 from datetime import datetime, timedelta # para manejar todos los tiempos del programa
 import threading # para crear un proceso / thread  para el cronometro
-from logica import validar_ranking
 
 # CLASSES _________________________________________________________________________________________________________________________________
 # CRONOMETRO ------------------------------------------------------------------------------------------------------------------------------
@@ -35,9 +34,20 @@ class cronometro:
                 self.partida.contador_tiempo.set(self.segundos)
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {self.segundos} s")
             elif self.tipo_crono == "regresivo" and self.corriendo:
-                self.segundos -= 1
-                self.partida.contador_tiempo.set(self.segundos)
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {self.segundos} s")
+                if self.segundos == 0:
+                    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: se acabo el tiempo!")
+                    self.detener() # se detiene el cronometro         
+                    ventana_perdida = tk.Toplevel(self.partida.ventana_root)
+                    ventana_perdida.title("¡LABERINTO FALLIDO!")
+                    ventana_perdida.geometry("280x150")
+                    ventana_perdida.resizable(False, False)
+                    ventana_perdida.geometry(f"300x200+{self.partida.ventana_root.winfo_x() + (self.partida.ventana_root.winfo_width()//2) - (280//2)}+{self.partida.ventana_root.winfo_y() + (self.partida.ventana_root.winfo_height()//2) - (150//2)}")
+                    ttk.Label(ventana_perdida, text="Se acabo el tiempo", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
+                    ttk.Button(ventana_perdida, text="Volver", command=lambda: self.partida.finalizar_partida(None, ventana_perdida, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
+                else:
+                    self.segundos -= 1
+                    self.partida.contador_tiempo.set(self.segundos)
+                    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: tiempo transcurrido {300 - self.segundos} s")
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CRONO: cronometro detenido")
 
     def detener(self):
@@ -100,6 +110,7 @@ class partida:
         self.dificultad_seleccionada = tk.StringVar()
         self.dimensiones_seleccionadas = tk.StringVar()
         self.contador_tiempo = tk.IntVar()
+        self.nombre_usuario = None
 
         # estilo customizado para los botones
         self.estilo_default_botones = ttk.Style()
@@ -167,7 +178,7 @@ class partida:
         # porcion del menu para mostrar el ranking
         ttk.Label(self.cuadro_menu, text="Ranking", font=("Courier", 20, "bold")).grid(row=10, column=0, pady=(25, 5))        
         self.ranking_treeview = ttk.Treeview(self.cuadro_menu, columns=("Tiempo", "Nombre", "Tamaño", "Pasos"), show="headings")
-        self.ranking_treeview.grid(row=11, column=0, pady=(0, 5), sticky='nsew')
+        self.ranking_treeview.grid(row=12, column=0, pady=(0, 5), sticky='nsew')
         self.ranking_treeview.heading("Tiempo", text="Tiempo", anchor=tk.W)
         self.ranking_treeview.heading("Nombre", text="Nombre", anchor=tk.W)
         self.ranking_treeview.heading("Tamaño", text="Tamaño", anchor=tk.W)
@@ -182,12 +193,10 @@ class partida:
         self.dimensiones_dinamicas(None) # dimensiones dinamicas toma un evento como parametro; en este caso un cambio en el combobox de dificultad de partida
         self.guardar_configuraciones() # se cargan las confoguraciones en base a los valores por defecto de todos los comboboxes en el menu
         self.ranking = self.cargar_rankings("archivos/rankings.txt") # se cargan los rankings
-        validar_ranking(self.ranking)
         self.mostrar_ranking() # se carga el rakning en el treeview
 
         # *** VICULAR EVENTOS ***
         # se vinculan eventos como cambiar el tamaño de la pantalla y inputs del teclado con su respectiva funcion
-        # self.ventana_root.bind("<Configure>", self.on_resize)
         self.ventana_root.bind("<Key>", self.movimiento) ### VALIDAR PARA ACEPTAR INPUTS UNICAMENTE CUANDO SE INICIA LA PARTIDA
 
     # *** FUNCIONES DE CLASE ***
@@ -196,38 +205,65 @@ class partida:
     # S: Devuelve una matriz que representa el laberinto seleccionado
     # R: El archivo debe existir
     def cargar_laberinto(self, ruta):
-            laberinto = []
-            try:
-                with open(ruta, 'r') as archivo:
-                    for linea in archivo:
-                        linea = linea.strip()
-                        if linea.startswith('#') or linea == '':
-                            continue
-                        fila = [int(celda) for celda in linea.strip().split(',')]
-                        laberinto.append(fila)
-            except FileNotFoundError:
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Error: Archivo no encontrado en {ruta}")
-                return None
-            return laberinto
+        laberinto = []
+        try:
+            with open(ruta, 'r') as archivo:
+                for linea in archivo:
+                    linea = linea.strip()
+                    if linea.startswith('#') or linea == '':
+                        continue
+                    fila = [int(celda) for celda in linea.strip().split(',')]
+                    laberinto.append(fila)
+        except FileNotFoundError:
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Error: Archivo no encontrado en {ruta}")
+            return None
+        return laberinto
+
+    # LLAVE ORDEN -------------------------------------------------------------------------------------------------------------------------
+    # E: 
+    # S:
+    # R:
+    def llave(self, linea_partida):
+        tiempo = int(linea_partida[0])
+        dimensiones = int(linea_partida[2].split("x")[0])
+        movimientos = int(linea_partida[3])
+        return (-dimensiones, tiempo, movimientos)
 
     # CARGAR RANKING ----------------------------------------------------------------------------------------------------------------------
     # E: Ruta al archivo de texto que contiene el ranking guardado
-    # S: Devuelve una matriz que representa el ranking
+    # S: Devuelve una matriz que representa el ranking ordenada
     # R: El archivo debe existir
     def cargar_rankings(self, ruta):
-            lista_ranking = []
-            try:
-                with open(ruta, 'r') as archivo: 
-                    for linea in archivo:
-                        linea = linea.strip()
-                        if linea.startswith('#') or linea == '':
-                            continue
-                        fila = [valor for valor in linea.split(',')]
-                        lista_ranking.append(fila)
-            except FileNotFoundError:
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} *** Error: Archivo de ranking no encontrado en {ruta} ***")
-                return []
-            return lista_ranking
+        lista_ranking = []
+        try:
+            with open(ruta, 'r') as archivo: 
+                for linea in archivo:
+                    linea = linea.strip()
+                    if linea.startswith('#') or linea == '':
+                        continue
+                    fila = [valor for valor in linea.split(',')]
+                    lista_ranking.append(fila)
+        except FileNotFoundError:
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} *** Error: Archivo de ranking no encontrado en {ruta} ***")
+            return []
+        for i in range(len(lista_ranking)):
+            indice_minimo = i
+            for ii in range(i+1, len(lista_ranking)):
+                if self.llave(lista_ranking[ii]) < self.llave(lista_ranking[indice_minimo]):
+                    indice_minimo = ii
+            lista_ranking[i], lista_ranking[indice_minimo] = lista_ranking[indice_minimo], lista_ranking[i]
+        return lista_ranking
+
+
+    # GUARDAR INFORMACION -----------------------------------------------------------------------------------------------------------------
+    # E: no tiene entradas
+    # S: no tiene salidas; la funcion unicamente guarda la informacion en los archivos .txt a la hora de salir del programa
+    # R: no tiene restricciones
+    def guardar_rankings(self):
+        archivo_ranking = open("archivos/rankings.txt", "w")
+        for partida in self.ranking:
+            archivo_ranking.write(f"{partida[0]},{partida[1]},{partida[2]},{partida[3]}\n")
+        archivo_ranking.close()
 
     # MOSTRAR RANKING ---------------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas
@@ -256,23 +292,10 @@ class partida:
             self.dimensiones_seleccionadas.set(self.combo_dimensiones.get())
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
             print(f"Tipo: {self.modo_seleccionado.get()} | Segundos: {self.contador_tiempo.get()} | Dificultad: {self.dificultad_seleccionada.get()} | Dimensiones: {self.dimensiones_seleccionadas.get()}")
-            
             # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
             ruta_laberinto = f"archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
             self.laberinto = self.cargar_laberinto(ruta_laberinto)
-            print(self.laberinto)
             # self.visualizar_laberinto()
-
-    # GUARDAR PARTIDA ---------------------------------------------------------------------------------------------------------------------
-    # E: 
-    # S: 
-    # R: TBD
-    def guardar_partida(self):
-        print(self.ranking)
-        print([str(timedelta(seconds=self.contador_tiempo.get())), "asd", self.dimensiones_seleccionadas.get(), self.movimientos_partida])
-        self.ranking.append([str(timedelta(seconds=self.contador_tiempo.get())), "asd", self.dimensiones_seleccionadas.get(), self.movimientos_partida])
-        self.mostrar_ranking()
-        return
     
     # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
     # E: el parametro de entrada es un evento que sucede al cambiar la seleccion de dificultad en el combobox del menu
@@ -312,7 +335,7 @@ class partida:
             self.bloques.append(fila_de_bloques)
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Laberinto cargado en la ventana.") # se agrega la fila de bloques a la matriz de bloques
     
-    # MOSTRAR TOKEN -----------------------------------------------------------------------------------------------------------------------
+    # MOSTRAR TOTEM -----------------------------------------------------------------------------------------------------------------------
     # E: como parametro de entrada se recibe una tupla con los valores (fila, columna) para manejar la posicion del token
     # S: no tiene salida; la funcion se encarga de mover el token en la pantalla; cada instancia de la funcion limpia y vuelve a mostrar el token en base a la posicion actual en la partida
     # R: TBD
@@ -340,7 +363,6 @@ class partida:
         # se guardan los valores fila y columna de la posicion actual en variables separadas para manejarlos en la funcion
         fila, columna = self.posicion_totem
         nueva_fila, nueva_columna = fila, columna
-        
         # se valida el tipo de input que se recibe del evento
         if event.keysym == "Up":
             nueva_fila -= 1
@@ -350,7 +372,6 @@ class partida:
             nueva_columna -= 1
         elif event.keysym == "Right":
             nueva_columna += 1
-
         if (0 <= nueva_fila < len(self.laberinto) and 
             0 <= nueva_columna < len(self.laberinto[0]) and
             self.laberinto[nueva_fila][nueva_columna] != 1):
@@ -363,21 +384,17 @@ class partida:
             self.posicion_totem = (nueva_fila, nueva_columna)
             self.mostrar_totem(self.posicion_totem)
             if self.laberinto[nueva_fila][nueva_columna] == 2:
-                self.cronometro.detener() # se detiene el cronometro
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ¡Has llegado al final!")
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: partida ganada!")
+                self.cronometro.detener() # se detiene el cronometro         
                 ventana_gane = tk.Toplevel(self.ventana_root)
                 ventana_gane.title("¡LABERINTO COMPLETADO!")
                 ventana_gane.geometry("280x150")
                 ventana_gane.resizable(False, False)
                 ventana_gane.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
                 ttk.Label(ventana_gane, text="Digite su Nombre", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
-                entrada_gane = tk.Entry(ventana_gane, width=30).place(relx=0.5, rely=0.5, anchor="center")
-                boton_guardar = ttk.Button(ventana_gane, text="Guardar Configuracion", command=self.guardar_partida, style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
-
-
-    # def on_resize(self, event):
-    #         """Vuelve a dibujar el laberinto cuando se redimensiona la ventana."""
-    #         self.ventana_root.after(1, self.visualizar_laberinto)
+                entrada_usuario = ttk.Entry(ventana_gane, width=30, textvariable=self.nombre_usuario)
+                entrada_usuario.place(relx=0.5, rely=0.5, anchor="center")
+                ttk.Button(ventana_gane, text="Guardar Partida", command=lambda: self.finalizar_partida(entrada_usuario.get(), ventana_gane, True), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
 
     # INICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas; comienza la partida
@@ -395,8 +412,11 @@ class partida:
             else:
                 self.cronometro = cronometro("progresivo", self)    
             self.cronometro.iniciar()
-            
 
+    # REINICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------
+    # E: 
+    # S: 
+    # R: TBD     
     def reiniciar_partida(self):
         if self.partida_iniciada == True:
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Reiniciando partida...")
@@ -406,16 +426,45 @@ class partida:
             # self.visualizar_laberinto()
             self.iniciar_partida()
 
+    # AUTOCOMPLETAR -----------------------------------------------------------------------------------------------------------------------
+    # E: 
+    # S: 
+    # R: TBD
     def autocompletar(self):
         if self.partida_iniciada == True:
             print("Función de auto-completar aún no implementada.")
-
+    
+    # ABANDONAR PARTIDA -------------------------------------------------------------------------------------------------------------------
+    # E: 
+    # S: 
+    # R: TBD
     def abandonar_partida(self):
         if self.partida_iniciada == True:
             self.partida_iniciada = False
             self.cronometro.detener()
+            self.guardar_configuraciones()
             self.visualizar_laberinto()
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Partida abandonada")
+
+    # FINALIZAR PARTIDA -------------------------------------------------------------------------------------------------------------------
+    # E: 
+    # S: 
+    # R: TBD
+    def finalizar_partida(self, nombre_usuario, ventana, partida_ganada):
+        self.partida_iniciada = False
+        if nombre_usuario != "" and partida_ganada == True:
+            print(self.ranking)
+            if self.modo_seleccionado == "Contra Tiempo":
+                self.ranking.append([(300 - self.contador_tiempo.get()), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+            else:
+                self.ranking.append([self.contador_tiempo.get(), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida])
+            print(self.ranking)
+            self.guardar_rankings()
+            self.ranking = self.cargar_rankings("archivos/rankings.txt")
+            self.mostrar_ranking()
+        self.guardar_configuraciones()
+        self.visualizar_laberinto()
+        ventana.destroy()
 
 # INICIO DE PARTIDA Y VENTANA PRINCIPAL ___________________________________________________________________________________________________
 if __name__ == "__main__": # iniciar la ventana unicamente si el archvo se esta ejecutando directamente 
