@@ -4,6 +4,7 @@ from tkinter import ttk, PhotoImage
 import time # utilizado para utilizar la funcion sleep()
 from datetime import datetime, timedelta # para manejar todos los tiempos del programa
 import threading # para crear un proceso / thread  para el cronometro
+from validar_laberinto import validar_laberinto
 
 # CLASSES _________________________________________________________________________________________________________________________________
 # CRONOMETRO ------------------------------------------------------------------------------------------------------------------------------
@@ -214,10 +215,15 @@ class partida:
                         continue
                     fila = [int(celda) for celda in linea.strip().split(',')]
                     laberinto.append(fila)
+                validacion = validar_laberinto(laberinto)
+                if not validacion['valido']:
+                    print(validacion['mensaje'])
+                    laberinto = []
         except FileNotFoundError:
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Error: Archivo no encontrado en {ruta}")
             return None
         return laberinto
+    
 
     # LLAVE ORDEN -------------------------------------------------------------------------------------------------------------------------
     # E: una lista representativa de la linea de los rankings
@@ -295,7 +301,8 @@ class partida:
             # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
             ruta_laberinto = f"archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
             self.laberinto = self.cargar_laberinto(ruta_laberinto)
-            # self.visualizar_laberinto()
+        
+            
     
     # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
     # E: el parametro de entrada es un evento que sucede al cambiar la seleccion de dificultad en el combobox del menu
@@ -316,6 +323,9 @@ class partida:
     # S: la funcion se encarga de mostrar en pantalla el laberinto cargado en memoria creando objetos 'bloque'
     # R: 
     def visualizar_laberinto(self):
+        if self.laberinto == []:
+            print('No se puede cargar un laberinto vacio')
+            return 
         self.canvas_laberinto.delete("all")
         self.bloques.clear()
         tamaño_celda = min(self.canvas_laberinto.winfo_width() // len(self.laberinto[0]), self.canvas_laberinto.winfo_height() // len(self.laberinto)) # calculo para obtener el tamanho de celda para mostrar el laberinto en base al tamanho de la pantalla
@@ -420,7 +430,14 @@ class partida:
     # S: no tiene salidas; la funcion se encarga de cambiar el valor 'partida_iniciada' de la partida; inicia los movimientos en 0; crea un objeto cronometro y lo inicia; dibuja el totem en la pantalla
     # R: solo se inicia la partida en caso de que el valor de la partida 'partida_iniciada' sea False
     def iniciar_partida(self):
-        if self.partida_iniciada == False:
+        if self.laberinto == []:
+            ventana_invalida = tk.Toplevel(self.ventana_root)
+            ventana_invalida.title("¡LABERINTO INVALIDO!")
+            ventana_invalida.protocol("WM_DELETE_WINDOW", lambda: None)
+            ventana_invalida.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
+            ttk.Label(ventana_invalida, text="Laberinto Invalido", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
+            ttk.Button(ventana_invalida, text="Volver", command=lambda: ventana_invalida.destroy(), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
+        elif self.partida_iniciada == False:
             self.movimientos_partida.set(0)
             self.partida_iniciada = True # habilita el movimiento del totem
             self.visualizar_laberinto()
@@ -431,6 +448,8 @@ class partida:
             else:
                 self.cronometro = cronometro("progresivo", self)    
             self.cronometro.iniciar()
+            
+            
 
     # REINICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------
     # E: la funcion no tiene entradas; reinicia la partida
@@ -456,7 +475,6 @@ class partida:
             matriz_visitados = [[False for _ in fila] for fila in self.laberinto]
             fila_inicio, columna_inicio = self.posicion_totem
             camino_meta = self.resolver_laberinto(self.laberinto, fila_inicio, columna_inicio, matriz_visitados)
-
             if camino_meta: # en caso de que la lista sea algo diferente de None, False o []
                 for fila, columna in camino_meta:
                     bloque_actual = self.bloques[fila][columna]
@@ -467,7 +485,6 @@ class partida:
                     self.mostrar_totem(self.posicion_totem)
                     self.ventana_root.update()
                     self.ventana_root.after(100)
-
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Laberinto completado automáticamente.")
                 ventana_auto = tk.Toplevel(self.ventana_root)
                 ventana_auto.title("¡LABERINTO COMPLETADO!")
