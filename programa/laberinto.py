@@ -192,7 +192,7 @@ class partida:
         # se inicia el juego con datos por defecto; en este caso una aprtida de tipo normal con dimensiones 8x8
         self.dimensiones_dinamicas(None) # dimensiones dinamicas toma un evento como parametro; en este caso un cambio en el combobox de dificultad de partida
         self.guardar_configuraciones() # se cargan las confoguraciones en base a los valores por defecto de todos los comboboxes en el menu
-        self.ranking = self.cargar_rankings("archivos/rankings.txt") # se cargan los rankings
+        self.ranking = self.cargar_rankings("programa/archivos/rankings.txt") # se cargan los rankings
         self.mostrar_ranking() # se carga el rakning en el treeview
 
         # *** VICULAR EVENTOS ***
@@ -298,7 +298,7 @@ class partida:
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
             print(f"Tipo: {self.modo_seleccionado.get()} | Segundos: {self.contador_tiempo.get()} | Dificultad: {self.dificultad_seleccionada.get()} | Dimensiones: {self.dimensiones_seleccionadas.get()}")
             # se crea ruta del laberinto en base a las configuraciones cargadas y se carga el laberinto con dicha ruta
-            ruta_laberinto = f"archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
+            ruta_laberinto = f"programa/archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
             self.laberinto = self.cargar_laberinto(ruta_laberinto)
         
     # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
@@ -525,7 +525,7 @@ class partida:
             else:
                 self.ranking.append([self.contador_tiempo.get(), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida.get()])
             self.guardar_rankings()
-            self.ranking = self.cargar_rankings("archivos/rankings.txt")
+            self.ranking = self.cargar_rankings("programa/archivos/rankings.txt")
             self.mostrar_ranking()
         self.guardar_configuraciones()
         self.visualizar_laberinto()
