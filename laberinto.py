@@ -24,7 +24,6 @@ class cronometro:
             self.corriendo = True
             self.proceso = threading.Thread(target=self.runtime, daemon=True)
             self.proceso.start()
-
     
     def runtime(self):
         while self.corriendo == True:
