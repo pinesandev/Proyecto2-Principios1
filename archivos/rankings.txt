@@ -2,16 +2,13 @@
 4,Pineda,8x8,23
 5,Ana,12x12,45
 5,Esteban,9x9,16
-9,pine,14x14,42
+6,Esteban,8x8,19
 11,Esteban,15x15,53
 12,Leo,16x16,45
 17,Esteban,16x16,98
-21,testing,16x16,112
 27,Mia,15x15,60
 27,Dani,14x14,65
 35,Sofi,12x12,55
 42,Valeria,15x15,105
 45,Joe,14x14,40
 45,Jime,10x10,35
-67,testing,16x16,136
-4,asd,8x8,19

@@ -288,6 +288,7 @@ class partida:
                 self.contador_tiempo.set(300)
             else:
                 self.contador_tiempo.set(0)
+                self.movimientos_partida.set(0)
             self.dificultad_seleccionada.set(self.combo_dificultad.get())
             self.dimensiones_seleccionadas.set(self.combo_dimensiones.get())
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} Las siguientes configuraciones fueron cargadas:") # log en terminal que indica las configuraciones cargadas
@@ -498,7 +499,7 @@ class partida:
     def finalizar_partida(self, nombre_usuario, ventana_emergente, partida_ganada):
         self.partida_iniciada = False
         if nombre_usuario != "" and partida_ganada == True:
-            if self.modo_seleccionado == "Contra Tiempo":
+            if self.modo_seleccionado.get() == "Contra Tiempo":
                 self.ranking.append([(300 - self.contador_tiempo.get()), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida.get()])
             else:
                 self.ranking.append([self.contador_tiempo.get(), nombre_usuario, self.dimensiones_seleccionadas.get(), self.movimientos_partida.get()])
