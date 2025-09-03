@@ -159,7 +159,6 @@ class partida:
         self.cuadro_menu = ttk.Frame(ventana_root, padding=15, relief="raised")
         self.cuadro_menu.grid(row=0, column=0, sticky='nsew')
         self.cuadro_menu.columnconfigure(0, weight=1)
-        self.cuadro_menu.rowconfigure(11, weight=1)
 
         # *** WIDGETS | CUADRO MENU *** 
         ttk.Label(self.cuadro_menu, text="Menu", font=("Courier", 20, "bold")).grid(row=0, column=0, pady=(0, 15))
@@ -278,8 +277,8 @@ class partida:
             for item in self.ranking_treeview.get_children(): # ciclo para limpiar el widget 'ranking_treeview'
                 self.ranking_treeview.delete(item)
             
-            for fila in self.ranking: # cargar datos nuevamente en el widget 'ranking_treeview'
-                self.ranking_treeview.insert("", "end", values=fila)
+            for fila in range(10): # cargar datos nuevamente en el widget 'ranking_treeview'
+                self.ranking_treeview.insert("", "end", values=self.ranking[fila])
 
     # GUARDAR CONFIGURACIONES -------------------------------------------------------------------------------------------------------------
     # E: no tiene entradas; la funcion se encarga de guardar las selecciones del usuario en la variable global 'configuraciones_de_juego'
@@ -302,8 +301,6 @@ class partida:
             ruta_laberinto = f"archivos/laberintos/{self.dificultad_seleccionada.get()}/{self.dimensiones_seleccionadas.get()}.txt"
             self.laberinto = self.cargar_laberinto(ruta_laberinto)
         
-            
-    
     # DIMENSIONES DINAMICAS ---------------------------------------------------------------------------------------------------------------
     # E: el parametro de entrada es un evento que sucede al cambiar la seleccion de dificultad en el combobox del menu
     # S: no tiene salidas; la funcion se encarga de cambiar los valores disponibles en el combobox de dimeniones en base a la dificultad seleccionada
@@ -419,8 +416,10 @@ class partida:
         if laberinto[fila][columna] == 2: # condicion de finalizacion
             return [(fila, columna)]
         matriz_visitados[fila][columna] = True
+        print(f"{fila}, {columna}")
         for x, y in [(-1,0), (1,0), (0,-1), (0,1)]:
             camino_correcto = self.resolver_laberinto(laberinto, fila+x, columna+y, matriz_visitados)
+            print(camino_correcto)
             if camino_correcto:
                 return [(fila, columna)] + camino_correcto
         return False
@@ -449,8 +448,6 @@ class partida:
                 self.cronometro = cronometro("progresivo", self)    
             self.cronometro.iniciar()
             
-            
-
     # REINICIAR PARTIDA -------------------------------------------------------------------------------------------------------------------
     # E: la funcion no tiene entradas; reinicia la partida
     # S: no tiene salidas; la funcion se encarga de imprimir en consola que la partida fue reiniciada, cambia el estado de partida_iniciada temporalmente a Falso, detiene el cronometro, vuelve a guardar las configuraciones y actualiza la pantalla y por ultimo inicia la partida nuevamente
@@ -471,8 +468,9 @@ class partida:
         if self.partida_iniciada == True:
             self.partida_iniciada = False
             self.cronometro.detener()
+            self.visualizar_laberinto()
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: Autocompletando partida")
-            matriz_visitados = [[False for _ in fila] for fila in self.laberinto]
+            matriz_visitados = [[False for i in fila] for fila in self.laberinto]
             fila_inicio, columna_inicio = self.posicion_totem
             camino_meta = self.resolver_laberinto(self.laberinto, fila_inicio, columna_inicio, matriz_visitados)
             if camino_meta: # en caso de que la lista sea algo diferente de None, False o []
@@ -495,6 +493,13 @@ class partida:
                 ttk.Button(ventana_auto, text="Volver", command=lambda: self.finalizar_partida(None, ventana_auto, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
             else:
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} STATUS: No se encontró solución al laberinto.")
+                ventana_auto = tk.Toplevel(self.ventana_root)
+                ventana_auto.title("¡SOLUCION NO ENCONTRADA!")
+                ventana_auto.resizable(False, False)
+                ventana_auto.protocol("WM_DELETE_WINDOW", lambda: None)
+                ventana_auto.geometry(f"300x200+{self.ventana_root.winfo_x() + (self.ventana_root.winfo_width()//2) - (280//2)}+{self.ventana_root.winfo_y() + (self.ventana_root.winfo_height()//2) - (150//2)}")
+                ttk.Label(ventana_auto, text="Solucion no encontrada!", font=("Courier", 20)).place(relx=0.5, rely=0.3, anchor="center")
+                ttk.Button(ventana_auto, text="Volver", command=lambda: self.finalizar_partida(None, ventana_auto, False), style='estilo_custom.TButton').place(relx=0.5, rely=0.7, anchor="center")
 
     # ABANDONAR PARTIDA -------------------------------------------------------------------------------------------------------------------
     # E: la funcion no tiene entradas; abandona la partida
